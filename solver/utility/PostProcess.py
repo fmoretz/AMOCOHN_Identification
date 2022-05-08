@@ -22,7 +22,7 @@ def fprint(type: str, param: str, sol, r2=0, err=0, flag='False', itr=0, funcall
         print(f"ERR: {err}")
         print("="*len(str), '\n')
     
-def regplot(x, y: List, xlabel, ylabel, title, legend: List, showbool=False):
+def modelplot(x, y: List, xlabel, ylabel, title, legend: List, showbool=False):
     plt.figure(figsize=(10,5))
     plt.plot(x, y[0], 'o', label = legend[0])
     plt.plot(x, y[1], '-', label = legend[1], linewidth=2)
@@ -48,6 +48,21 @@ def surfplot(x, y, z, xlabel, ylabel, zlabel, title, showbool):
     ax.set_ylabel(ylabel)
     ax.set_zlabel(zlabel)
     ax.set_title(title)
+    
+    if showbool == True:
+        plt.show()
+    else:
+        pass
+    
+def regplot(x, y, xlabel, ylabel, title, showbool=False, gridbool=True):
+    plt.figure(figsize=(10,5))
+    plt.plot(x, y[0], 'o', label = 'Model')
+    plt.plot(x, y[1], '-', label = 'Experimental', linewidth=2)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(gridbool)
+    plt.legend()
+    plt.title(title)
     
     if showbool == True:
         plt.show()

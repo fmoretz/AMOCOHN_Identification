@@ -15,8 +15,7 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
     Equation for methane flow
     qM = k6 * alpha * D * X2
     y = m * x + b
-    y = qM | x = X2 | m = k6 * alpha * D
-    k6 = m / alpha * D
+    y = qM | x = X2 * alpha * D | m = k6
     """
     
     y  = np.empty(len(X2))
@@ -31,6 +30,25 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
         mx[i] = m[i] * x[i]
     
     return RMSE(y, mx)
+
+def Methane_LIN(alpha, D, X2, qM):
+    """
+    Equation for methane flow
+    qM = k6 * alpha * D * X2
+    y = m * x + b
+    y = qM | x = X2 * alpha * D | m = k6 
+    """
+    
+    Y = np.empty(len(X2))
+    X = np.empty(len(X2))
+    
+    for i in range(0, len(X2)):
+        Y[i] =qM[i]
+        X[i] = alpha * D[i] * X2[i]
+    
+    [slope, intercept, r, p, se] = linregress(X, Y)
+    
+    return [slope, intercept, r**0.5, p, se]
 
 def Carbon_Dioxide_RMSE(kLa, C, pH, KH, PC, Kb, qC):
     """ 
@@ -55,7 +73,7 @@ def Carbon_Dioxide_RMSE(kLa, C, pH, KH, PC, Kb, qC):
     
     return RMSE(y, mx)
 
-def Carbon_Dioxide_LIN(C, pH, KH, PC, Kb, qC):
+def Carbon_Dioxide_LIN(C, pH, PC, Kb, qC):
     """ 
     Equation for carbon dioxide flow
     qC = kLa * (C / (1 + 10**(pH - pKb)) - kH * Pc)
@@ -63,19 +81,14 @@ def Carbon_Dioxide_LIN(C, pH, KH, PC, Kb, qC):
     y = qC | x = C / (1 + 10**(pH - pKb)) - kH * Pc | m = kLa
     """
     pKb = -np.log10(Kb)
-    Y = qC
-    
-    if type(pH) is not list:
-        exp =  float(pH) - float(pKb)
-        X = C*1/(1+10**(pH-pKb)) - KH*PC
-    
-    else:
-        exp = np.empty(shape=(len(pH),))
-        X = np.empty(shape=(len(pH),))
-        for i in range(0, len(pH)):
-            exp[i] = float(pH[i]) - float(pKb)
-            X[i] = (C[i]/(1+10**exp[i]) - KH*PC[i])
-
+    exp = np.empty(shape=(len(pH),))
+    X = np.empty(shape=(len(pH),))
+    Y = np.empty(shape=(len(pH),))
+    for i in range(0, len(pH)):
+        exp[i] = float(pH[i]) - float(pKb)
+        X[i] = (C[i]/(1+10**exp[i])/PC[i])
+        Y[i] = qC[i]/PC[i]
+             
     [slope, intercept, r, p, se] = linregress(X, Y)
     return [slope, intercept, r**0.5, p, se] 
 
