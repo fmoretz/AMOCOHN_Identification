@@ -1,6 +1,7 @@
 # define the function for RSE
 import numpy as np
-import solver.RegModel as rm
+import RegModel as rm
+from typing import List
 from scipy.stats import linregress
 from sklearn.metrics import mean_squared_error
 

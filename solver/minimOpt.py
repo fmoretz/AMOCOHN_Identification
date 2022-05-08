@@ -11,8 +11,8 @@ from utility.dataimport import *
 from utility.PhysConstants import *
 from utility.ReactorConf import *
 from utility.PostProcess import *
-import solver.eqRMSE as solver
-import solver.RegModel as rm
+import eqRMSE as solver
+import RegModel as rm
 
 # create main function
 def main():
@@ -34,8 +34,8 @@ def main():
     CO2_min = minimize(solver.Carbon_Dioxide_RMSE, x0 = (gs,), args = (C, pH, KH, PC, Kb, qC), bounds = bd, tol = 1e-10, constraints=r2_CO2)
     XT_min  = minimize(solver.Hydrolysis_RMSE, x0 = (gs,), args = (D, XTin, XT), bounds = bd, tol = 1e-10, constraints=r2_XT)
     S1_min  = minimize(solver.Acidogenesis_RMSE, x0 = (gs,), args = (alpha, D, S1, X1, XT_min.x, S1in, XT), bounds = bd, tol = 1e-10, constraints=r2_S1)
-    [kLa, q, r2, p_val, err] = solver.Carbon_Dioxide_LIN(C, pH, KH, PC, Kb, qC)
-    [k1, q1, r21, p_val1, err1] = solver.Acidogenesis_LIN(alpha, D, S1, X1, XT_min.x, S1in, XT)
+    [kLa, q_CO2, r2_CO2, p_CO2, err_CO2] = solver.Carbon_Dioxide_LIN(C, pH, KH, PC, Kb, qC)
+    [k1, q_S1, r2_S1, p_S1, err_S1] = solver.Acidogenesis_LIN(alpha, D, S1, X1, XT_min.x, S1in, XT)
     
     # Model evaluation
     qM_Model = np.empty(len(D))
@@ -50,19 +50,11 @@ def main():
         S1_Model[i] = rm.S1eval(k1, alpha, D[i], X1[i], XT_min.x, S1in, XT[i])
 
     # print out results
-    fprint('k6-RMSE', CH4_min.x, CH4_min.success, CH4_min.nit, CH4_min.fun, [qM, qM_Model])
-    fprint('kLa-RMSE', CO2_min.x, CO2_min.success, CO2_min.nit, CO2_min.fun, [qC, qC_Model])
-    fprint('kLa-LIN', kLa, 'NO-INFO', err, r2, [qC, rm.qCeval(kLa, C, pH, KH, PC, Kb)])
-    fprint('khyd-RMSE', XT_min.x, XT_min.success, XT_min.nit, XT_min.fun, [XT, XT_Model])
-    fprint('k1-RMSE', S1_min.x, S1_min.success, S1_min.nit, S1_min.fun, [S1, S1_Model])
-    fprint('k1-LIN', k1, 'NO-INFO', err, r2, [S1, S1_Model])
-
-    # plot results
-    legend = ['Experimental data', 'Model']
-    regplot(1/D, [qM, qM_Model], 'time [days]', 'qM [g/s]', 'Methane production regression', legend, False)
-    regplot(1/D, [qC, qC_Model], 'time [days]', 'qC [g/s]', 'Carbon Dioxide production regression', legend, False)
-    regplot(1/D, [XT, XT_Model], 'time [days]', 'XT [kg/m3]', 'Particulate Hydrolysis regression', legend, False)
-    regplot(1/D, [S1, S1_Model], 'time [days]', 'S1 [kg/m3]', 'Acidogenesis regression', legend, True)
+    fprint('RMSE', 'k6', CH4_min.x, flag = CH4_min.success, r2 = r2_CH4['fun'](CH4_min.x), itr=CH4_min.nit, funcall=solver.RMSE(qM, rm.qMeval(CH4_min.x, alpha, D, X2)))
+    fprint('RMSE', 'khyd', XT_min.x, flag = XT_min.success, r2 = r2_XT['fun'](XT_min.x), itr=XT_min.nit, funcall=solver.RMSE(XT, rm.XTeval(XT_min.x, D, XTin)))
+    fprint('LIN', 'kLa', kLa, r2_CO2, err_CO2)
+    fprint('LIN', 'k1', k1, r2_S1, err_S1)
+    
 
     return 0;
 

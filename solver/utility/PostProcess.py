@@ -4,17 +4,25 @@ import numpy as np
 from typing import List
 from sklearn.metrics import r2_score
 
-def fprint(type, sol, flag, itr, funcall, r2: List):
-    str = f"== Results {type} =="
-    print(str)
-    print(f"Success: {flag}")
-    print(f"Solution: {sol}")
-    print(f"RSE: {funcall}")
-    print(f"Iterations: {itr}")
-    print(f"R2 score: {r2_score(r2[0], r2[1])}")
-    print("="*len(str), '\n')
+def fprint(type: str, param: str, sol, r2=0, err=0, flag='False', itr=0, funcall=0):
+    if type is 'RMSE':
+        str = f"== Results {param} w {type} =="
+        print(str)
+        print(f"Success: {flag}")
+        print(f"Solution: {sol}")
+        print(f"RMSE: {funcall}")
+        print(f"Iterations: {itr}")
+        print("="*len(str), '\n')
+        
+    elif type is 'LIN':
+        str = f"== Results {param} w {type} =="
+        print(str)
+        print(f"Solution: {sol}")
+        print(f"R2: {r2}")
+        print(f"ERR: {err}")
+        print("="*len(str), '\n')
     
-def regplot(x, y: List, xlabel, ylabel, title, legend: List, showbool):
+def regplot(x, y: List, xlabel, ylabel, title, legend: List, showbool=False):
     plt.figure(figsize=(10,5))
     plt.plot(x, y[0], 'o', label = legend[0])
     plt.plot(x, y[1], '-', label = legend[1], linewidth=2)
