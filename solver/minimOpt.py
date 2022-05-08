@@ -11,8 +11,8 @@ from utility.dataimport import *
 from utility.PhysConstants import *
 from utility.ReactorConf import *
 from utility.PostProcess import *
-import eqRMSE as solver
-import RegModel as rm
+import solver.eqRMSE as solver
+import solver.RegModel as rm
 
 # create main function
 def main():
