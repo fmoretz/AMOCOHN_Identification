@@ -1,112 +1,66 @@
 # import scientific libraries
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, fsolve
+from scipy.optimize import minimize
 from scipy.optimize import Bounds
-from typing import List
 from sklearn.metrics import r2_score
 plt.close('all')
 
 # import data and define the variables
-global C_in, q_C, X_1, X_2, C, q_C, D, kd1, kd2
-from dataimport import *
-from Identification import *
-kd1 = kd[0]; kd2 = kd[1]
-C_in  = float(T2["Cin"])
-D     = 1/T1["HRT"]
-X_1   = T1["X1"]
-X_2   = T1["X2"]
-C     = T1["C"]
-q_C   = T1["q_C"]        # Experimental points for the regression and comparison
+from utility.dataimport import *
+from utility.PhysConstants import *
+from utility.ReactorConf import *
+from utility.PostProcess import *
+import eqRMSE as solver
+import RegModel as rm
 
 # create main function
 def main():
     
     # define the bounds
-    bd = Bounds([0,0],[1000,1000])
+    bd = Bounds([0], [5000])
     
     # define the initial values
-    gs = [1, 10]
+    gs = 20
     
-    # solve minimization problem
-    minsol = minimize(rmse, gs, args = (D, X_1, X_2, C, q_C, C_in, kd1, kd2, 1), method = 'SLSQP', bounds = bd, tol = 1e-10)
-    qCmodel = qCeval(D, X_1, X_2, C, C_in, kd1, kd2, alfa, minsol.x[0], minsol.x[1])
+    # define the contraints 
+    r2_CH4 = {'type': 'ineq','fun': lambda y: r2_score(qM, rm.qMeval(y, alpha, D, X2))}
+    r2_CO2 = {'type': 'ineq','fun': lambda y: r2_score(qC, rm.qCeval(y,  C, pH, KH, PC, Kb))}
+    r2_XT  = {'type': 'ineq','fun': lambda y: r2_score(XT, rm.XTeval(y, D, XTin))}
+    r2_S1  = {'type': 'ineq','fun': lambda y: r2_score(S1, rm.S1eval(y, alpha, D, X1, XT_min.x, S1in, XT))}
     
+    # Single Parameter Regression
+    CH4_min = minimize(solver.Methane_RMSE, x0 = (gs,), args = (alpha, D, X2, qM), bounds = bd, tol = 1e-10, constraints=r2_CH4)
+    CO2_min = minimize(solver.Carbon_Dioxide_RMSE, x0 = (gs,), args = (C, pH, KH, PC, Kb, qC), bounds = bd, tol = 1e-10, constraints=r2_CO2)
+    XT_min  = minimize(solver.Hydrolysis_RMSE, x0 = (gs,), args = (D, XTin, XT), bounds = bd, tol = 1e-10, constraints=r2_XT)
+    S1_min  = minimize(solver.Acidogenesis_RMSE, x0 = (gs,), args = (alpha, D, S1, X1, XT_min.x, S1in, XT), bounds = bd, tol = 1e-10, constraints=r2_S1)
+    
+    # Model evaluation
+    qM_Model = np.empty(len(D))
+    qC_Model = np.empty(len(D))
+    XT_Model = np.empty(len(D))
+    S1_Model = np.empty(len(D))
+    
+    for i in range(0, len(D)):
+        qM_Model[i] = rm.qMeval(CH4_min.x, alpha, D[i], X2[i])
+        qC_Model[i] = rm.qCeval(CO2_min.x, C[i], pH[i], KH, PC[i], Kb)
+        XT_Model[i] = rm.XTeval(XT_min.x, D[i], XTin)
+        S1_Model[i] = rm.S1eval(S1_min.x, alpha, D[i], X1[i], XT_min.x, S1in, XT[i])
+
     # print out results
-    fprint(minsol.x, minsol.success, minsol.nit, minsol.fun, [q_C, qCmodel])
+    fprint('k6', CH4_min.x, CH4_min.success, CH4_min.nit, CH4_min.fun, [qM, qM_Model])
+    fprint('kLa', CO2_min.x, CO2_min.success, CO2_min.nit, CO2_min.fun, [qC, qC_Model])
+    fprint('khyd', XT_min.x, XT_min.success, XT_min.nit, XT_min.fun, [XT, XT_Model])
+    fprint('k1', S1_min.x, S1_min.success, S1_min.nit, S1_min.fun, [S1, S1_Model])
 
     # plot results
-    regplot(1/D, [q_C, qCmodel], 'time [days]', 'q_C [g/s]', 'Carbon dioxide production regression', ['Experimental data', 'Model'], False)
-    
-    # plot function surface
-    k4x = np.linspace(0, 120, 20)   
-    k5x = np.linspace(0, 120, 20)
-    
-    rmsez = np.empty([len(k4x), len(k5x)])
-    for i in range(0,len(k4x)):
-        for j in range(0,len(k5x)):
-            rmsez[i][j] = rmse([k4x[i], k5x[j]], D, X_1, X_2, C, q_C, C_in, kd1, kd2, 1)
-    
-    surfplot(k4x, k5x, rmsez, 'k4', 'k5', 'rmse', 'rmse over k4 and k5 values', True)
+    legend = ['Experimental data', 'Model']
+    regplot(1/D, [qM, qM_Model], 'time [days]', 'qM [g/s]', 'Methane production regression', legend, False)
+    regplot(1/D, [qC, qC_Model], 'time [days]', 'qC [g/s]', 'Carbon Dioxide production regression', legend, False)
+    regplot(1/D, [XT, XT_Model], 'time [days]', 'XT [kg/m3]', 'Particulate Hydrolysis regression', legend, True)
+    regplot(1/D, [S1, S1_Model], 'time [days]', 'S1 [kg/m3]', 'Acidogenesis regression', legend, True)
 
     return 0;
-
-
-# define the function for RSE
-def rmse(x, D, X1, X2, C, qC, Cin, kd1, kd2, alfa) -> float:
-    qClist = []
-    for i in range(0, len(D)):
-         qClist.append(qCeval(D[i], X1[i], X2[i], C[i], Cin, kd1, kd2, alfa, x[0], x[1]))
-         
-    return np.sqrt(np.mean(qC-qClist)**2)
-    
-# define the function for the qC
-def qCeval(D, X1, X2, C, Cin, kd1, kd2, alfa, k4, k5) -> float:
-    return D*(Cin-C) + k4*(alfa*D+kd1)*X1 + k5*(alfa*D+kd2)*X2
-
-# utility function for printing and plotting
-def fprint(sol, flag, itr, funcall, r2: List):
-    print(f"\nSuccess: {flag}\n")
-    print("==Results==")
-    print(f"Solution: {sol}")
-    print(f"RSE: {funcall}")
-    print(f"Iterations: {itr}")
-    print(f"R2 score: {r2_score(r2[0], r2[1])}")
-    print("============")
-    
-def regplot(x, y: List, xlabel, ylabel, title, legend: List, showbool):
-    plt.figure(figsize=(10,5))
-    plt.plot(x, y[0], 'o', label = legend[0])
-    plt.plot(x, y[1], '-', label = legend[1], linewidth=2)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.grid(True)
-    plt.legend()
-    plt.title(title)
-    
-    if showbool == True:
-        plt.show()
-    else:
-        pass
-
-def surfplot(x, y, z, xlabel, ylabel, zlabel, title, showbool):
-    import mpl_toolkits.mplot3d.axes3d as axes3d
-    from matplotlib import cm
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
-    X, Y = np.meshgrid(x, y)
-    ax.plot_surface(X, Y, z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_zlabel(zlabel)
-    ax.set_title(title)
-    
-    if showbool == True:
-        plt.show()
-    else:
-        pass
-    
-    
 
 if __name__ == "__main__":
     main()
