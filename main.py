@@ -18,10 +18,13 @@ import solver.RegModel as rm
 def main():
     
     # define the bounds
-    bd = Bounds([0], [5000])
-    
+    bd1 = Bounds([0], [5000])
+    bd2 = Bounds([0, 0], [5000, 5000])
+    bd3 = Bounds([0, 0, 0], [5000, 5000, 5000]) 
     # define the initial values
-    gs = 20
+    v1 = 20
+    v2 = [20, 20]
+    v3 = [20, 20, 20]
     
     # define the contraints 
     r2_CH4 = {'type': 'ineq','fun': lambda y: r2_score(qM, rm.qMeval(y, alpha, D, X2))}
@@ -31,11 +34,15 @@ def main():
     
     # Single Parameter Regression+
     # 'RMSE' Regression
-    CH4_min = minimize(solver.Methane_RMSE, x0 = (gs,), args = (alpha, D, X2, qM), bounds = bd, tol = 1e-10, constraints = r2_CH4)
-    XT_min  = minimize(solver.Hydrolysis_RMSE, x0 = (gs,), args = (D, XTin, XT), bounds = bd, tol = 1e-10, constraints = r2_XT)
+    CH4_min = minimize(solver.Methane_RMSE,    x0 = (v1,), args = (alpha, D, X2, qM), bounds = bd1, tol = 1e-10, constraints = r2_CH4)
+    XT_min  = minimize(solver.Hydrolysis_RMSE, x0 = (v1,), args = (D, XTin, XT),      bounds = bd1, tol = 1e-10, constraints = r2_XT)
+    S1_min  = minimize(solver.Substrate1_RMSE, x0 = (v2,), args = (S1, alpha, D),     bounds = bd2, tol = 1e-10)
+    S2_min  = minimize(solver.Substrate2_RMSE, x0 = (v3,), args = (S2, alpha, D),     bounds = bd3, tol = 1e-10)
     
     k6 = CH4_min.x
-    khyd = XT_min.x  
+    khyd = XT_min.x
+    [mu1m, Ks1] = S1_min.x
+    [mu2m, Ks2, KI] = S2_min.x
 
     # 'LIN' Regression
     [k1, q_S1, score_S1]      = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
@@ -57,7 +64,8 @@ def main():
     # print out results
     fprint('RMSE', 'k6', k6, flag = CH4_min.success, r2 = r2_CH4['fun'](k6), itr=CH4_min.nit, funcall=solver.RMSE(qM, rm.qMeval(k6, alpha, D, X2)))
     fprint('RMSE', 'khyd', khyd, flag = XT_min.success, r2 = r2_XT['fun'](khyd), itr=XT_min.nit, funcall=solver.RMSE(XT, rm.XTeval(khyd, D, XTin)))
-    
+    fprintf('RMSE', 'mu1_max + Ks1', [mu1m, Ks1], flag = S1_min.success, itr=S1_min.nit)
+    fprintf('RMSE', 'mu2_max + Ks2 + KI', [mu2m, Ks2, KI], flag = S2_min.success, itr=S2_min.nit)
     fprint('LIN', 'k1', k1, score_S1)
     fprint('LIN', 'kLa', kLa, score_CO2)
     

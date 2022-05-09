@@ -6,11 +6,81 @@ from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
 
 def RMSE(Data: List, Model: List) -> float:
+    """
+    RMSE tool for regression model
+    RMSE = sqrt(sum((Data - Model)^2) / len(Data))
+    """
+    
     MSE = mean_squared_error(Data, Model)
     RMSE = (MSE)**0.5
     return RMSE
 
 # --------------------------------------------------------------------------------------------------------------------- RMSE Algorithm
+def Substrate1_RMSE(mu1m, Ks1, S1, alpha, D):
+    """
+    Equation for substrate 1
+    S1 = alpha / (0.9 * mu1m) * D * (S1 + Ks1) + 0.11 * Ks1
+    y = a * x1 + b * x2 + q
+    y = S1 | a = 1 / mu1m | x1 = alpha * D * S1/ 0.9 | 
+    b = Ks1 / mu1m | x2 = alpha * D / 0.9 | 
+    q = 0.11 * Ks1
+    """
+    
+    y  = np.empty(len(S1))
+    a  = np.empty(len(S1))
+    x1 = np.empty(len(S1))
+    b  = np.empty(len(S1))
+    x2 = np.empty(len(S1))
+    q  = np.empty(len(S1))
+    ax1bx2q = np.empty(len(S1))
+    
+    for i in range(0, len(S1)):
+        y[i]  = S1[i]
+        a[i]  = 1 / mu1m[i]
+        x1[i] = alpha * D[i] * S1[i] / 0.9
+        b[i]  = Ks1[i] / mu1m[i]
+        x2[i] = alpha * D[i] / 0.9
+        q[i]  = 0.11 * Ks1[i]
+        ax1bx2q[i] = a[i] * x1[i] + b[i] * x2[i] + q[i]
+        
+    return RMSE(y, ax1bx2q)
+
+def Substrate2_RMSE(mu2m, Ks2, KI, S2, alpha, D):
+    """
+    Equation for substrate 2
+    S2 = alpha / (0.9 * mu2m) * D * (S2 + Ks2 + S2^2/KI) + 0.11 * (Ks2 + S2^2/KI)
+    y = a * x1 + b * x2 + c * x3 + d * x4 + q
+    y = S1 | a = 1 / mu2m | x1 = alpha * D * S2/ 0.9 |
+    b = Ks2 / mu2m | x2 = alpha * D / 0.9 | c = 1 / (mu2m * KI) |
+    x3 = alpha * D * S2^2 / 0.9 | d = 0.11 / KI | x4 = S2^2 | 
+    q = 0.11 * Ks2
+    """
+    y  = np.empty(len(S2))
+    a  = np.empty(len(S2))
+    x1 = np.empty(len(S2))
+    b  = np.empty(len(S2))
+    x2 = np.empty(len(S2))
+    c  = np.empty(len(S2))
+    x3 = np.empty(len(S2))
+    d  = np.empty(len(S2))
+    x4 = np.empty(len(S2))
+    q  = np.empty(len(S2))
+    ax1bx2cx3dx4q = np.empty(len(S2))
+    
+    for i in range(0, len(S2)):
+        y[i]  = S2[i]
+        a[i]  = 1 / mu2m[i]
+        x1[i] = alpha * D[i] * S2[i] / 0.9
+        b[i]  = Ks2[i] / mu2m[i]
+        x2[i] = alpha * D[i] / 0.9
+        c[i]  = 1 / (mu2m[i] * KI[i])
+        x3[i] = alpha * D[i] * S2[i] ** 2 / 0.9
+        d[i]  = 0.11 / KI[i]
+        x4[i] = S2[i] ** 2
+        q[i]  = 0.11 * Ks2[i]
+        ax1bx2cx3dx4q[i] = a[i] * x1[i] + b[i] * x2[i] + c[i] * x3[i] + d[i] * x4[i] + q[i]
+
+    return RMSE(y, ax1bx2cx3dx4q)
 
 def Methane_RMSE(k6, alpha, D, X2, qM):
     """
@@ -26,9 +96,9 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
     mx = np.empty(len(X2))
     
     for i in range(0, len(X2)):
-        y[i] = qM[i] / X2[i]
-        m[i] = k6 * alpha
-        x[i] = D[i]
+        y[i]  = qM[i] / X2[i]
+        m[i]  = k6 * alpha
+        x[i]  = D[i]
         mx[i] = m[i] * x[i]
     
     return RMSE(y, mx)
