@@ -4,11 +4,14 @@ import solver.RegModel as rm
 from typing import List
 from scipy.stats import linregress
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 
 def RMSE(Data: List, Model: List) -> float:
     MSE = mean_squared_error(Data, Model)
     RMSE = (MSE)**0.5
     return RMSE
+
+# --------------------------------------------------------------------------------------------------------------------- RMSE Algorithm
 
 def Methane_RMSE(k6, alpha, D, X2, qM):
     """
@@ -30,25 +33,6 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
         mx[i] = m[i] * x[i]
     
     return RMSE(y, mx)
-
-def Methane_LIN(alpha, D, X2, qM):
-    """
-    Equation for methane flow
-    qM / X2 = k6 * alpha * D
-    y = m * x
-    y = qM / X2 | x = alpha * D | m = k6
-    """
-    
-    Y = np.empty(len(X2))
-    X = np.empty(len(X2))
-    
-    for i in range(0, len(X2)):
-        Y[i] = qM[i] / X2[i]
-        X[i] = alpha * D[i]
-    
-    [slope, intercept, r, p, se] = linregress(X, Y)
-    
-    return [slope, intercept, r**0.5, p, se]
 
 def Carbon_Dioxide_RMSE(kLa, C, CO2, KH, PC, qC):
     """ 
@@ -72,25 +56,6 @@ def Carbon_Dioxide_RMSE(kLa, C, CO2, KH, PC, qC):
     
     return RMSE(y, mx)
 
-def Carbon_Dioxide_LIN(CO2, PC, KH, qC):
-    """ 
-    Equation for carbon dioxide flow
-    qC = kLa * (CO2 - KH * PC)
-    y = m * x
-    y = qC | x = CO2 - KH * Pc | m = kLa
-    """
-    
-    X = np.empty(len(PC))
-    Y = np.empty(len(PC))
-
-    for i in range(0, len(PC)):
-        X[i] = CO2[i] - KH*PC[i]
-        Y[i] = qC[i]
-             
-    [slope, intercept, r, p, se] = linregress(X, Y)
-    return [slope, intercept, r**0.5, p, se] 
-
-
 def Hydrolysis_RMSE(khyd, D, XTin, XT):
     """
     Equation for hydrolysis
@@ -112,30 +77,12 @@ def Hydrolysis_RMSE(khyd, D, XTin, XT):
 
     return RMSE(y, mx)
 
-def Hydrolysis_LIN(D, XTin, XT):
-    """
-    Equation for hydrolysis
-    D*(XTin - XT) = khyd * XT
-    y = m * x
-    y = D*(XTin - XT) | x = XT | m = khyd
-    """
-    
-    X = np.empty(len(XT))
-    Y = np.empty(len(XT))
-
-    for i in range(0, len(XT)):
-        Y[i] = D[i] * (XTin - XT[i])
-        X[i] = XT[i]
-             
-    [slope, intercept, r, p, se] = linregress(X, Y)
-    return [slope, intercept, r**0.5, p, se] 
-
 def Acidogenesis_RMSE(k1, alpha, D, S1, X1, khyd, Sin, XT):
     """
     Equation for acidogenesis
     D*(Sin - S1) + khyd * XT = k1 * alpha * D * X1
-    y = m * x
-    y = D*(Sin - S1) + khyd * XT | x = alpha * D * X1 | m = k1
+    y = m * x + q
+    y = D*(Sin - S1) + khyd * XT | x = alpha * D * X1 | m = k1 | q = khyd
     """
     
     y = np.empty(len(S1))
@@ -151,6 +98,62 @@ def Acidogenesis_RMSE(k1, alpha, D, S1, X1, khyd, Sin, XT):
     
     return RMSE(y, mx)
 
+# --------------------------------------------------------------------------------------------------------------------- LIN Algorithm
+
+def Methane_LIN(alpha, D, X2, qM):
+    """
+    Equation for methane flow
+    qM / X2 = k6 * alpha * D
+    y = m * x
+    y = qM / X2 | x = alpha * D | m = k6
+    """
+    
+    Y = np.empty(len(X2)).reshape(-1,1)
+    X = np.empty(len(X2)).reshape(-1,1)
+    
+    for i in range(0, len(X2)):
+        Y[i] = qM[i] / X2[i]
+        X[i] = alpha * D[i]
+    
+    reg = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
+def Carbon_Dioxide_LIN(CO2, PC, KH, qC):
+    """ 
+    Equation for carbon dioxide flow
+    qC = kLa * (CO2 - KH * PC)
+    y = m * x
+    y = qC | x = CO2 - KH * Pc | m = kLa
+    """
+    
+    X = np.empty(len(PC)).reshape(-1,1)
+    Y = np.empty(len(PC)).reshape(-1,1)
+
+    for i in range(0, len(PC)):
+        X[i] = CO2[i] - KH*PC[i]
+        Y[i] = qC[i]
+             
+    reg = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
+def Hydrolysis_LIN(D, XTin, XT):
+    """
+    Equation for hydrolysis
+    D*(XTin - XT) = khyd * XT
+    y = m * x
+    y = D*(XTin - XT) | x = XT | m = khyd
+    """
+    
+    X = np.empty(len(XT)).reshape(-1,1)
+    Y = np.empty(len(XT)).reshape(-1,1)
+
+    for i in range(0, len(XT)):
+        Y[i] = D[i] * (XTin - XT[i])
+        X[i] = XT[i]
+             
+    reg = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
 def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
     """
     Equation for acidogenesis
@@ -159,13 +162,12 @@ def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
     y = D*(Sin - S1) + khyd * XT | x = alpha * D * X1 | m = k1
     """
     
-    Y = np.empty(len(S1))
-    X = np.empty(len(S1))
+    Y = np.empty(len(S1)).reshape(-1,1)
+    X = np.empty(len(S1)).reshape(-1,1)
     
     for i in range(0, len(S1)):
         Y[i] = D[i]*(Sin - S1[i]) + khyd * XT[i]
         X[i] = alpha * D[i] * X1[i]
     
-    [slope, intercept, r, p, se] = linregress(X, Y)
-    
-    return [slope, intercept, r**0.5, p, se]
+    reg = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]

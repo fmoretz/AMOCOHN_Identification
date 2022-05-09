@@ -38,8 +38,8 @@ def main():
     khyd = XT_min.x  
 
     # 'LIN' Regression
-    [k1, q_S1, r2_S1, p_S1, err_S1]      = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
-    [kLa, q_CO2, r2_CO2, p_CO2, err_CO2] = solver.Carbon_Dioxide_LIN(CO2, PC, KH, qC)
+    [k1, q_S1, score_S1]      = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
+    [kLa, q_CO2, score_CO2]   = solver.Carbon_Dioxide_LIN(CO2, PC, KH, qC)
     
     
     # Model evaluation
@@ -58,8 +58,8 @@ def main():
     fprint('RMSE', 'k6', k6, flag = CH4_min.success, r2 = r2_CH4['fun'](k6), itr=CH4_min.nit, funcall=solver.RMSE(qM, rm.qMeval(k6, alpha, D, X2)))
     fprint('RMSE', 'khyd', khyd, flag = XT_min.success, r2 = r2_XT['fun'](khyd), itr=XT_min.nit, funcall=solver.RMSE(XT, rm.XTeval(khyd, D, XTin)))
     
-    fprint('LIN', 'k1', k1, r2_S1, err_S1)
-    fprint('LIN', 'kLa', kLa, r2_CO2, err_CO2)
+    fprint('LIN', 'k1', k1, score_S1)
+    fprint('LIN', 'kLa', kLa, score_CO2)
     
     # Visualization
     Y_data_CH4  = np.empty(len(D))

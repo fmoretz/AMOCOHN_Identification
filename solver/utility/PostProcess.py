@@ -4,7 +4,7 @@ import numpy as np
 from typing import List
 from sklearn.metrics import r2_score
 
-def fprint(type: str, param: str, sol, r2=0, err=0, flag='False', itr=0, funcall=0):
+def fprint(type: str, param: str, sol, r2=0, flag='False', itr=0, funcall=0, intercept=0):
     if type is 'RMSE':
         str = f"== Results {param} w {type} =="
         print(str)
@@ -18,8 +18,8 @@ def fprint(type: str, param: str, sol, r2=0, err=0, flag='False', itr=0, funcall
         str = f"== Results {param} w {type} =="
         print(str)
         print(f"Solution: {sol}")
-        print(f"R2: {r2}")
-        print(f"ERR: {err}")
+        print(f"q: {intercept}")
+        print(f"SCORE: {r2}")
         print("="*len(str), '\n')
     
 def modelplot(x, y: List, xlabel, ylabel, title, legend: List, showbool=False):
