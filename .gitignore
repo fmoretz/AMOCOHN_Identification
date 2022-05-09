@@ -5,8 +5,8 @@ old
 ./vscode
 .DS_Store
 .DS_store
-LinearEquations.py
-LinearEquations
+solver/utility/LinearEquations.py
+solver/utility/LinearEquations
 
 # temp
 .tempRunnerFile.py
