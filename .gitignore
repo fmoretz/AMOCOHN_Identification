@@ -1,10 +1,12 @@
-# Folder to be ignored
+# files and folder to be ignored
 __pycache__
 _pycache_
 old
 ./vscode
 .DS_Store
 .DS_store
+LinearEquations.py
+LinearEquations
 
 # temp
 .tempRunnerFile.py
