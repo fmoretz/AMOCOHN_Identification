@@ -42,26 +42,32 @@ qM   = T1["q_CH4"].tolist()
 
 print(f'\n{len(HRT)} data points imported')
 print(f'HRT: {HRT[0]} - {HRT[-1]}')
-print(f'S1: {S1}')
-print(f'XT: {XT}')
-print(f'S2: {S2}')
-print(f'X1: {X1}')
-print(f'X2: {X2}')
-print(f'Z: {Z}')
-print(f'C: {C}')
+print(f'S1:  {S1}')
+print(f'XT:  {XT}')
+print(f'S2:  {S2}')
+print(f'X1:  {X1}')
+print(f'X2:  {X2}')
+print(f'Z:   {Z}')
+print(f'C:   {C}')
 print(f'CO2: {CO2}')
-print(f'B: {B}')
-print(f'pH: {pH}')
-print(f'qC: {qC}')
-print(f'PC: {PC}')
-print(f'qM: {qM}')
+print(f'B:   {B}')
+print(f'pH:  {pH}')
+print(f'qC:  {qC}')
+print(f'PC:  {PC}')
+print(f'qM:  {qM}')
+print('\n')
+print('Influent data:')
+S1in = float(T2["S1in"])    # [gCOD/L]
+S2in = float(T2["S2in"])    # [mmol/L]
+Cin  = float(T2["Cin"])    # [mmol/L]
+XTin = float(T2["XTin"])    # [gCOD/L]
+print(f'S1in: {S1in}')
+print(f'S2in: {S2in}')
+print(f'Cin:  {Cin}')
+print(f'XTin: {XTin}')
 print('\n')
 
 D = np.empty(len(HRT))
 for i in range(0, len(HRT)):
 	D[i] = 1/HRT[i]
 
-S1in = float(T2["S1in"])    # [gCOD/L]
-S2in = float(T2["S2in"])    # [mmol/L]
-Cin  = float(T2["Cin"])    # [mmol/L]
-XTin = float(T2["XTin"])    # [gCOD/L]

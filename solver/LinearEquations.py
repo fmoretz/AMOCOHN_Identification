@@ -1,7 +1,7 @@
 # Expressions to be regressed against the data
 import numpy as np
-from utility.PhysConstants import *
-from utility.ReactorConf import *
+from solver.utility.PhysConstants import *
+from solver.utility.ReactorConf import *
 from typing import List
 
 def Methane(x, alpha: float, biomass_2: float, Dilution: float, Methane_flow: float) -> float:

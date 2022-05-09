@@ -1,6 +1,6 @@
 # define the function for RSE
 import numpy as np
-import RegModel as rm
+import solver.RegModel as rm
 from typing import List
 from scipy.stats import linregress
 from sklearn.metrics import mean_squared_error
@@ -13,9 +13,9 @@ def RMSE(Data: List, Model: List) -> float:
 def Methane_RMSE(k6, alpha, D, X2, qM):
     """
     Equation for methane flow
-    qM = k6 * alpha * D * X2
-    y = m * x + b
-    y = qM | x = X2 * alpha * D | m = k6
+    qM / X2 = k6 * alpha * D
+    y = m * x
+    y = qM / X2 | x = alpha * D | m = k6
     """
     
     y  = np.empty(len(X2))
@@ -24,9 +24,9 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
     mx = np.empty(len(X2))
     
     for i in range(0, len(X2)):
-        y[i] = qM[i]
-        m[i] = k6 * alpha * D[i]
-        x[i] = X2[i]
+        y[i] = qM[i] / X2[i]
+        m[i] = k6 * alpha
+        x[i] = D[i]
         mx[i] = m[i] * x[i]
     
     return RMSE(y, mx)
@@ -34,28 +34,28 @@ def Methane_RMSE(k6, alpha, D, X2, qM):
 def Methane_LIN(alpha, D, X2, qM):
     """
     Equation for methane flow
-    qM = k6 * alpha * D * X2
-    y = m * x + b
-    y = qM | x = X2 * alpha * D | m = k6 
+    qM / X2 = k6 * alpha * D
+    y = m * x
+    y = qM / X2 | x = alpha * D | m = k6
     """
     
     Y = np.empty(len(X2))
     X = np.empty(len(X2))
     
     for i in range(0, len(X2)):
-        Y[i] =qM[i]
-        X[i] = alpha * D[i] * X2[i]
+        Y[i] = qM[i] / X2[i]
+        X[i] = alpha * D[i]
     
     [slope, intercept, r, p, se] = linregress(X, Y)
     
     return [slope, intercept, r**0.5, p, se]
 
-def Carbon_Dioxide_RMSE(kLa, C, pH, KH, PC, Kb, qC):
+def Carbon_Dioxide_RMSE(kLa, C, CO2, KH, PC, qC):
     """ 
     Equation for carbon dioxide flow
-    qC = kLa * (C / (1 + 10**(pH - pKb)) - kH * Pc)
-    y = m * x + b
-    y = qC | x = C / (1 + 10**(pH - pKb)) - kH * Pc | m = kLa
+    qC = kLa * (CO2 - KH * PC)
+    y = m * x
+    y = qC | x = CO2 - KH * Pc | m = kLa
     """
     
     y  = np.empty(len(C))
@@ -63,31 +63,29 @@ def Carbon_Dioxide_RMSE(kLa, C, pH, KH, PC, Kb, qC):
     x  = np.empty(len(C))
     mx = np.empty(len(C))
     
-    pKb = -np.log10(Kb)
-    
     for i in range(0, len(C)):
         y[i]  = qC[i]
         m[i]  = kLa
-        x[i]  = C[i] * (1 / (1 + 10**(pH[i] - pKb))) - KH * PC[i]
+        x[i]  = CO2[i]  - KH * PC[i]
         mx[i] = m[i] * x[i]
+        
     
     return RMSE(y, mx)
 
-def Carbon_Dioxide_LIN(C, pH, PC, Kb, qC):
+def Carbon_Dioxide_LIN(CO2, PC, KH, qC):
     """ 
     Equation for carbon dioxide flow
-    qC = kLa * (C / (1 + 10**(pH - pKb)) - kH * Pc)
-    y = m * x + b
-    y = qC | x = C / (1 + 10**(pH - pKb)) - kH * Pc | m = kLa
+    qC = kLa * (CO2 - KH * PC)
+    y = m * x
+    y = qC | x = CO2 - KH * Pc | m = kLa
     """
-    pKb = -np.log10(Kb)
-    exp = np.empty(shape=(len(pH),))
-    X = np.empty(shape=(len(pH),))
-    Y = np.empty(shape=(len(pH),))
-    for i in range(0, len(pH)):
-        exp[i] = float(pH[i]) - float(pKb)
-        X[i] = (C[i]/(1+10**exp[i])/PC[i])
-        Y[i] = qC[i]/PC[i]
+    
+    X = np.empty(len(PC))
+    Y = np.empty(len(PC))
+
+    for i in range(0, len(PC)):
+        X[i] = CO2[i] - KH*PC[i]
+        Y[i] = qC[i]
              
     [slope, intercept, r, p, se] = linregress(X, Y)
     return [slope, intercept, r**0.5, p, se] 
@@ -97,7 +95,7 @@ def Hydrolysis_RMSE(khyd, D, XTin, XT):
     """
     Equation for hydrolysis
     D*(XTin - XT) = khyd * XT
-    y = m * x + b
+    y = m * x
     y = D*(XTin - XT) | x = XT | m = khyd
     """
     
@@ -114,11 +112,29 @@ def Hydrolysis_RMSE(khyd, D, XTin, XT):
 
     return RMSE(y, mx)
 
+def Hydrolysis_LIN(D, XTin, XT):
+    """
+    Equation for hydrolysis
+    D*(XTin - XT) = khyd * XT
+    y = m * x
+    y = D*(XTin - XT) | x = XT | m = khyd
+    """
+    
+    X = np.empty(len(XT))
+    Y = np.empty(len(XT))
+
+    for i in range(0, len(XT)):
+        Y[i] = D[i] * (XTin - XT[i])
+        X[i] = XT[i]
+             
+    [slope, intercept, r, p, se] = linregress(X, Y)
+    return [slope, intercept, r**0.5, p, se] 
+
 def Acidogenesis_RMSE(k1, alpha, D, S1, X1, khyd, Sin, XT):
     """
     Equation for acidogenesis
     D*(Sin - S1) + khyd * XT = k1 * alpha * D * X1
-    y = m * x + b
+    y = m * x
     y = D*(Sin - S1) + khyd * XT | x = alpha * D * X1 | m = k1
     """
     
@@ -139,7 +155,7 @@ def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
     """
     Equation for acidogenesis
     D*(Sin - S1) + khyd * XT = k1 * alpha * D * X1
-    y = m * x + b
+    y = m * x
     y = D*(Sin - S1) + khyd * XT | x = alpha * D * X1 | m = k1
     """
     

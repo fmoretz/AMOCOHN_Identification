@@ -1,5 +1,5 @@
 # Reactor Conditions
-from utility.PhysConstants import *
+from solver.utility.PhysConstants import *
 import numpy as np
 
 T    = 35      # [°C]
