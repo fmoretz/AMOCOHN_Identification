@@ -1,9 +1,9 @@
 # define the function for RSE
 import numpy as np
-import solver.RegModel as rm
 from typing import List
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression
+import pandas as pd
 
 def RMSE(Data: List, Model: List) -> float:
     """
@@ -16,7 +16,7 @@ def RMSE(Data: List, Model: List) -> float:
     return RMSE
 
 # --------------------------------------------------------------------------------------------------------------------- RMSE Algorithm
-def Substrate1_RMSE(mu1m, Ks1, S1, alpha, D):
+def Substrate1_RMSE(x, S1, alpha, D):
     """
     Equation for substrate 1
     S1 = alpha / (0.9 * mu1m) * D * (S1 + Ks1) + 0.11 * Ks1
@@ -25,6 +25,8 @@ def Substrate1_RMSE(mu1m, Ks1, S1, alpha, D):
     b = Ks1 / mu1m | x2 = alpha * D / 0.9 | 
     q = 0.11 * Ks1
     """
+    
+    mu1m, Ks1 = x
     
     y  = np.empty(len(S1))
     a  = np.empty(len(S1))
@@ -36,11 +38,11 @@ def Substrate1_RMSE(mu1m, Ks1, S1, alpha, D):
     
     for i in range(0, len(S1)):
         y[i]  = S1[i]
-        a[i]  = 1 / mu1m[i]
+        a[i]  = 1 / mu1m
         x1[i] = alpha * D[i] * S1[i] / 0.9
-        b[i]  = Ks1[i] / mu1m[i]
+        b[i]  = Ks1 / mu1m
         x2[i] = alpha * D[i] / 0.9
-        q[i]  = 0.11 * Ks1[i]
+        q[i]  = 0.11 * Ks1
         ax1bx2q[i] = a[i] * x1[i] + b[i] * x2[i] + q[i]
         
     return RMSE(y, ax1bx2q)
@@ -240,3 +242,64 @@ def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
     
     reg = LinearRegression(fit_intercept=False).fit(X, Y)
     return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
+def Substrate1_LIN(S1, alpha, D):
+    """
+    Equation for substrate 1
+    S1 = alpha / (0.9 * mu1m) * D * (S1 + Ks1) + 0.11 * Ks1
+    y = a * x1 + b * x2 + q
+    y = S1 | a = 1 / mu1m | x1 = alpha * D * S1/ 0.9 | 
+    b = Ks1 / mu1m | x2 = alpha * D / 0.9 | 
+    q = 0.11 * Ks1
+    """
+    
+    y  = np.empty(len(S1))
+    x1 = np.empty(len(S1))
+    x2 = np.empty(len(S1))
+    
+    for i in range(0, len(S1)):
+        y[i]  = S1[i]
+        x1[i] = alpha * D[i] * S1[i] / 0.9
+        x2[i] = alpha * D[i] / 0.9
+    
+    data = {'x1': x1, 'x2': x2, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2']]
+        
+    reg = LinearRegression(fit_intercept=True).fit(X, Y)
+    
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
+def Substrate2_LIN(S2, alpha, D):
+    """
+    Equation for substrate 2
+    S2 = alpha / (0.9 * mu2m) * D * (S2 + Ks2 + S2^2/KI) + 0.11 * (Ks2 + S2^2/KI)
+    y = a * x1 + b * x2 + c * x3 + d * x4 + q
+    y = S1 | a = 1 / mu2m | x1 = alpha * D * S2/ 0.9 |
+    b = Ks2 / mu2m | x2 = alpha * D / 0.9 | c = 1 / (mu2m * KI) |
+    x3 = alpha * D * S2^2 / 0.9 | d = 0.11 / KI | x4 = S2^2 | 
+    q = 0.11 * Ks2
+    """
+    y  = np.empty(len(S2))
+    x1 = np.empty(len(S2))
+    x2 = np.empty(len(S2))
+    x3 = np.empty(len(S2))
+    x4 = np.empty(len(S2))
+    
+    for i in range(0, len(S2)):
+        y[i]  = S2[i]
+        x1[i] = alpha * D[i] * S2[i] / 0.9
+        x2[i] = alpha * D[i] / 0.9
+        x3[i] = alpha * D[i] * S2[i] ** 2 / 0.9
+        x4[i] = S2[i] ** 2
+
+    data = {'x1': x1, 'x2': x2, 'x3': x3, 'x4': x4, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'x3', 'x4', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2', 'x3', 'x4']]
+        
+    reg = LinearRegression(fit_intercept=True).fit(X, Y)
+    
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+

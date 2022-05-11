@@ -56,13 +56,28 @@ def surfplot(x, y, z, xlabel, ylabel, zlabel, title, showbool):
     
 def regplot(x, y, xlabel, ylabel, title, showbool=False, gridbool=True):
     plt.figure(figsize=(10,5))
-    plt.plot(x, y[0], 'o', label = 'Model')
-    plt.plot(x, y[1], '-', label = 'Experimental', linewidth=2)
+    plt.plot(x, y[0], 'o', label = 'Experimental')
+    plt.plot(x, y[1], '-', label = 'Model', linewidth=2)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(gridbool)
     plt.legend()
     plt.title(title)
+    
+    if showbool == True:
+        plt.show()
+    else:
+        pass
+    
+def multiplot(z:List, x: List, xlabel: List, zlabel, title, showbool=False, gridbool=True):
+    fig = plt.figure(figsize=(10,5))
+    ax  = fig.add_subplot(1, 1, 1, projection='3d')
+    ax.set_title(title)
+    ax.set_xlabel(xlabel[0])
+    ax.set_ylabel(xlabel[1])
+    ax.set_zlabel(zlabel)
+    ax.plot(x[0], x[1], z[1], 'o', label = 'Model')
+    ax.plot(x[0], x[1], z[0], '-', label = 'Experimental', linewidth=2)
     
     if showbool == True:
         plt.show()
