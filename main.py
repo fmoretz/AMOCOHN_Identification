@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
-from sklearn.metrics import r2_score
-plt.close('all')
+from sklearn.metrics import r2_scor
 
 # import data and define the variables
 from solver.utility.dataimport import *
