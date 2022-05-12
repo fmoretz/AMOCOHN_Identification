@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
-from sklearn.metrics import r2_scor
+from sklearn.metrics import r2_score
 
 # import data and define the variables
 from solver.utility.dataimport import *
@@ -127,7 +127,7 @@ def main():
         Y_data_AC[i]    = D[i]*(S1in - S1[i]) + khyd * XT[i] 
         Y_model_AC[i]   = k1 * X_AC[i]
 
-        # Susbstrate 1 - S1 = alpha / (0.9 * mu1m) * D * (S1 + Ks1) + 0.11 * Ks1
+        # Susbstrate 1 - S1 = 1/mu1m * alpha * D * S1 / 0.9 + Ks1/mu1m * alpha * D / 0.9 + 0.11 * Ks1
         X_S1_1[i]       = alpha * D[i] * S1[i] / 0.9
         X_S1_2[i]       = alpha * D[i] / 0.9
         Y_data_S1[i]    = S1[i]
@@ -148,7 +148,7 @@ def main():
     regplot(X_S1_1, [Y_data_S1, Y_model_S1],   'alpha*D*S1/0.9 [kg/m3/d]', 'S1 [kg/m3]', 'mu1m regression - Substrate 1 - X: 1' )
     regplot(X_S1_2, [Y_data_S1, Y_model_S1],   'alpha*D/0.9 [d-1]', 'S1 [kg/m3]', 'mu1m regression - Substrate 1 - X: 2' )
     
-    multiplot([X_S1_1, X_S1_2], [Y_data_S1, Y_model_S1], ['alpha*D*S1/0.9 [kg/m3/d]','alpha*D/0.9 [d-1]'], 'S1 [kg/m3]', 'mu1m and Ks1 regression - Substrate 1', showbool=True)
+    multiplot([Y_data_S1, Y_model_S1], [X_S1_1, X_S1_2], ['alpha*D*S1/0.9 [kg/m3/d]','alpha*D/0.9 [d-1]'], 'S1 [kg/m3]', 'mu1m and Ks1 regression - Substrate 1', showbool=True)
 
     return 0;
 

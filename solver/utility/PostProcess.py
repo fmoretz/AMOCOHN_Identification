@@ -5,7 +5,7 @@ from typing import List
 from sklearn.metrics import r2_score
 
 def fprint(type: str, param: str, sol, r2=0, flag='False', itr=0, funcall=0, intercept=0):
-    if type is 'RMSE':
+    if type == 'RMSE':
         str = f"== Results {param} w {type} =="
         print(str)
         print(f"Success: {flag}")
@@ -14,7 +14,7 @@ def fprint(type: str, param: str, sol, r2=0, flag='False', itr=0, funcall=0, int
         print(f"Iterations: {itr}")
         print("="*len(str), '\n')
         
-    elif type is 'LIN':
+    elif type == 'LIN':
         str = f"== Results {param} w {type} =="
         print(str)
         print(f"Solution: {sol}")
