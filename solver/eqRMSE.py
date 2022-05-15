@@ -303,3 +303,55 @@ def Substrate2_LIN(S2, alpha, D):
     
     return [reg.coef_, reg.intercept_, reg.score(X, Y)]
 
+def Methanogenesis_LIN(alpha, D, X1, X2, S2, S2in):
+    """
+    Equation for methanogenesis
+    D*(S2in - S2) = k3 * alpha * D * X2 - k2 * alpha * D * X1
+    y = a * x1 + b * x2
+    y = D*(S2in - S2) | a = k3 | x1 = alpha * D * X2
+    b = k2 | x2 = - alpha * D * X1 
+    """
+    
+    y  = np.empty(len(X1))
+    x1 = np.empty(len(X1))
+    x2 = np.empty(len(X1))
+    
+    for i in range(0, len(X1)):
+        y[i]  = D[i]*(S2in - S2[i])
+        x1[i] = alpha * D[i] * X2[i]
+        x2[i] = - alpha * D[i] * X1[i]
+    
+    data = {'x1': x1, 'x2': x2, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2']]
+        
+    reg = LinearRegression(fit_intercept=True).fit(X, Y)
+    
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+
+def Carbogenesis_LIN(alpha, D, qC, X1, X2, C, Cin):
+    """
+    Equation for inorganic carbon production (Carbogenesis)
+    qC - D*(Cin - C) = k5 * alpha * D * X2 - k4 * alpha * D * X1
+    y = a * x1 + b * x2
+    y = qC - D*(Cin - C) | a = k5 | x1 = alpha * D * X2
+    b = k4 | x2 = - alpha * D * X1 
+    """
+    
+    y   = np.empty(len(X1))
+    x1  = np.empty(len(X1))
+    x2  = np.empty(len(X1))
+    
+    for i in range(0, len(X1)):
+        y[i]  = qC[i] - D[i]*(Cin - C[i])
+        x1[i] = alpha * D[i] * X2[i]
+        x2[i] = - alpha * D[i] * X1[i]
+        
+    data = {'x1': x1, 'x2': x2, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2']]
+    
+    reg = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg.coef_, reg.intercept_, reg.score(X, Y)]

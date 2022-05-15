@@ -54,15 +54,35 @@ def surfplot(x, y, z, xlabel, ylabel, zlabel, title, showbool):
     else:
         pass
     
-def regplot(x, y, xlabel, ylabel, title, showbool=False, gridbool=True):
+def regplot(x, y, xlabel, ylabel, title, showbool=False, gridbool=True, subplot=False):
     plt.figure(figsize=(10,5))
-    plt.plot(x, y[0], 'o', label = 'Experimental')
-    plt.plot(x, y[1], '-', label = 'Model', linewidth=2)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.grid(gridbool)
-    plt.legend()
-    plt.title(title)
+    
+    if subplot == False:
+        plt.plot(x, y[0], 'o', label = 'Experimental')
+        plt.plot(x, y[1], '-', label = 'Model', linewidth=2)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.grid(gridbool)
+        plt.legend()
+        plt.title(title)
+        
+    elif subplot == True:
+        plt.subplot(1,2,1)
+        plt.plot(x[0], y[0], 'o', label = 'Experimental')
+        plt.plot(x[0], y[1], '-', label = 'Model', linewidth=2)
+        plt.xlabel(xlabel[0])
+        plt.ylabel(ylabel[0])
+        plt.grid(gridbool)
+        plt.legend()
+        
+        plt.subplot(1,2,2)
+        plt.plot(x[1], y[2], 'o', label = 'Experimental')
+        plt.plot(x[1], y[3], '-', label = 'Model', linewidth=2)
+        plt.xlabel(xlabel[1])
+        plt.ylabel(ylabel[1])
+        plt.grid(gridbool)
+        plt.legend()
+        plt.suptitle(title)
     
     if showbool == True:
         plt.show()
