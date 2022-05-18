@@ -137,9 +137,9 @@ def S2model(alpha, D, mu2m, Ks2, KI, S2):
 
     return X_S2_1, X_S2_2, X_S2_3, X_S2_4, Y_data_S2, Y_model_S2
     
-def MEmodel(alpha, D, X1, X2, S2, S2in, k2, k3):
+def MEmodel(D, qM, S2in, S2, S1in, S1, khyd, XT, k6, k3, k1, k2):
     """
-    Methanogenesis - D*(S2in - S2) = k3 * alpha * D * X2 - k2 * alpha * D * X1
+    New Methanogenesis - qM = k6/k3 * D*(S2in - S2) + k6 * k2/(k3 * k1) * (D*(Sin - S1) + khyd * XT)
     """
     Y_data_ME   = np.empty(len(D))
     Y_model_ME  = np.empty(len(D))
@@ -147,16 +147,16 @@ def MEmodel(alpha, D, X1, X2, S2, S2in, k2, k3):
     X_ME_2      = np.empty(len(D))
     
     for i in range(0, len(D)):
-        X_ME_1[i]       = alpha * D[i] * X1[i]
-        X_ME_2[i]       = alpha * D[i] * X2[i]
-        Y_data_ME[i]    = D[i]*(S2in - S2[i]) 
-        Y_model_ME[i]   = k3 * X_ME_2[i] - k2 * X_ME_1[i]
+        X_ME_1[i]       = D[i] * (S2in - S2[i])
+        X_ME_2[i]       = D[i] * (S1in - S1[i]) + khyd * XT[i]
+        Y_data_ME[i]    = qM[i]
+        Y_model_ME[i]   = k6/k3 * X_ME_2[i] + k6*k2/(k3*k1) * X_ME_1[i]
 
     return X_ME_1, X_ME_2, Y_data_ME, Y_model_ME
 
-def ICmodel(alpha, D, qC, X1, X2, C, Cin, k5, k4):
+def ICmodel(D, qC, qM, Cin, C, S1in, S1, khyd, XT, k4, k1, k5, k6):
     """
-    Carbogenesis - qC - D*(Cin - C) = k5 * alpha * D * X2 - k4 * alpha * D * X1
+    New Carbogenesis -     qC - D*(Cin - C) = k4/k1 * (D*(Sin - S1) + khyd * XT) + k5 / k6 * qM
     """
     Y_data_IC   = np.empty(len(D))
     Y_model_IC  = np.empty(len(D))
@@ -164,9 +164,9 @@ def ICmodel(alpha, D, qC, X1, X2, C, Cin, k5, k4):
     X_IC_2      = np.empty(len(D))
     
     for i in range(0, len(D)):
-        X_IC_1[i]       = alpha * D[i] * X1[i]
-        X_IC_2[i]       = alpha * D[i] * X2[i]
-        Y_data_IC[i]    = qC[i] - D[i]*(Cin - C[i]) 
-        Y_model_IC[i]   = k5 * X_IC_2[i] - k4 * X_IC_1[i]
+        X_IC_1[i]       = D[i] * (S1in - S1[i]) + khyd * XT[i]
+        X_IC_2[i]       = qM[i]
+        Y_data_IC[i]    = qC[i] - D[i]*(Cin - C[i])
+        Y_model_IC[i]   = k4/k1 * X_IC_2[i] + k5/k6 * X_IC_1[i]
 
     return X_IC_1, X_IC_2, Y_data_IC, Y_model_IC

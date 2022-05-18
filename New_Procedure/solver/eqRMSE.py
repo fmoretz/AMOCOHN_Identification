@@ -185,9 +185,9 @@ def Methane_LIN(alpha, D, X2, qM):
     for i in range(0, len(X2)):
         Y[i] = qM[i] / X2[i]
         X[i] = alpha * D[i]
-    
-    reg = LinearRegression(fit_intercept=False).fit(X, Y)
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+        
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Carbon_Dioxide_LIN(CO2, PC, KH, qC):
     """ 
@@ -204,8 +204,8 @@ def Carbon_Dioxide_LIN(CO2, PC, KH, qC):
         X[i] = CO2[i] - KH*PC[i]
         Y[i] = qC[i]
              
-    reg = LinearRegression(fit_intercept=False).fit(X, Y)
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Hydrolysis_LIN(D, XTin, XT):
     """
@@ -222,8 +222,8 @@ def Hydrolysis_LIN(D, XTin, XT):
         Y[i] = D[i] * (XTin - XT[i])
         X[i] = XT[i]
              
-    reg = LinearRegression(fit_intercept=False).fit(X, Y)
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
     """
@@ -240,8 +240,8 @@ def Acidogenesis_LIN(alpha, D, S1, X1, khyd, Sin, XT):
         Y[i] = D[i]*(Sin - S1[i]) + khyd * XT[i]
         X[i] = alpha * D[i] * X1[i]
     
-    reg = LinearRegression(fit_intercept=False).fit(X, Y)
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Substrate1_LIN(S1, alpha, D):
     """
@@ -267,9 +267,8 @@ def Substrate1_LIN(S1, alpha, D):
     Y = df['y']
     X = df[['x1', 'x2']]
         
-    reg = LinearRegression(fit_intercept=True).fit(X, Y)
-    
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Substrate2_LIN(S2, alpha, D):
     """
@@ -299,9 +298,8 @@ def Substrate2_LIN(S2, alpha, D):
     Y = df['y']
     X = df[['x1', 'x2', 'x3', 'x4']]
         
-    reg = LinearRegression(fit_intercept=True).fit(X, Y)
-    
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Methanogenesis_LIN(alpha, D, X1, X2, S2, S2in):
     """
@@ -326,9 +324,8 @@ def Methanogenesis_LIN(alpha, D, X1, X2, S2, S2in):
     Y = df['y']
     X = df[['x1', 'x2']]
         
-    reg = LinearRegression(fit_intercept=True).fit(X, Y)
-    
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
 
 def Carbogenesis_LIN(alpha, D, qC, X1, X2, C, Cin):
     """
@@ -353,5 +350,57 @@ def Carbogenesis_LIN(alpha, D, qC, X1, X2, C, Cin):
     Y = df['y']
     X = df[['x1', 'x2']]
     
-    reg = LinearRegression(fit_intercept=False).fit(X, Y)
-    return [reg.coef_, reg.intercept_, reg.score(X, Y)]
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
+
+def Methanogenesis_RATIO(D, qM, S2in, S2, S1in, S1, khyd, XT):
+    """
+    New expression for methane flowrate evaluation:
+    qM = k6/k3 * D*(S2in - S2) + k6 * k2/(k3 * k1) * (D*(Sin - S1) + khyd * XT)
+    y = a * x1 + b * x2
+    y = qM | a = k6/k3 | x1 = D*(S2in - S2)
+    b = k6 * k2/(k3 * k1) | x2 = (D*(Sin - S1) + khyd * XT)
+    """
+    
+    y   = np.empty(len(S1))
+    x1  = np.empty(len(S1))
+    x2  = np.empty(len(S1))
+    
+    for i in range(0, len(S1)):
+        y[i]  = qM[i]
+        x1[i] = D[i] * (S2in - S2[i])
+        x2[i] = D[i] * (S1in - S1[i]) + khyd * XT[i]
+        
+    data = {'x1': x1, 'x2': x2, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2']]
+    
+    reg_ = LinearRegression(fit_intercept=True).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]
+
+def Carbogenesis_RATIO(D, qC, qM, Cin, C, S1in, S1, khyd, XT):
+    """
+    New expression for carbon dioxide flowrate evaluation:
+    qC - D*(Cin - C) = k4/k1 * (D*(Sin - S1) + khyd * XT) + k5 / k6 * qM
+    y = a * x1 + b * x2
+    y = qC - D*(Cin - C) | a = k4/k1 | x1 = (D*(Sin - S1) + khyd * XT)
+    b = k5 / k6 | x2 = qM
+    """
+    
+    y   = np.empty(len(S1))
+    x1  = np.empty(len(S1))
+    x2  = np.empty(len(S1))
+    
+    for i in range(0, len(S1)):
+        y[i]  = qC[i] - D[i]*(Cin - C[i])
+        x1[i] = D[i] * (S1in - S1[i]) + khyd * XT[i]
+        x2[i] = qM[i]
+        
+    data = {'x1': x1, 'x2': x2, 'y': y}
+    df = pd.DataFrame(data, columns=['x1', 'x2', 'y'])
+    Y = df['y']
+    X = df[['x1', 'x2']]
+    
+    reg_ = LinearRegression(fit_intercept=False).fit(X, Y)
+    return [reg_.coef_, reg_.intercept_, reg_.score(X, Y)]

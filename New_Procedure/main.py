@@ -15,7 +15,7 @@ import solver.RegModel as rm
 
 # create main function
 def main():
-    
+
     # define the bounds
     bd1 = Bounds([0], [5000])
     bd2 = Bounds([0, 0], [5000, 5000])
@@ -31,52 +31,46 @@ def main():
     r2_CO2 = {'type': 'ineq','fun': lambda y: r2_score(qC, rm.qCeval(y, C, pH, KH, PC, Kb))}
     r2_AC  = {'type': 'ineq','fun': lambda y: r2_score(S1, rm.ACeval(y, alpha, D, X1, XT_min.x, S1in, XT))}
     
-    # Single Parameter Regression+
-    # 'RMSE' Regression
-    CH4_min = minimize(solver.Methane_RMSE,    v1, args = (alpha, D, X2, qM), bounds = bd1, tol = 1e-10, constraints = r2_CH4)
-    XT_min  = minimize(solver.Hydrolysis_RMSE, v1, args = (D, XTin, XT),      bounds = bd1, tol = 1e-10, constraints = r2_XT)
-    
-    k6 = CH4_min.x
-    khyd = XT_min.x
-
-    # 'LIN' Regression
-    [k1, q_AC, score_AC]          = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
-    [kLa, q_CO2, score_CO2]       = solver.Carbon_Dioxide_LIN(CO2, PC, KH, qC)
-    [[a, b], q_1, score_1]        = solver.Substrate1_LIN(S1, alpha, D)
-    [[c, d, e, f], q_2, score_2]  = solver.Substrate2_LIN(S2, alpha, D)
-    [[k3, k2], q_3, score_3]      = solver.Methanogenesis_LIN(alpha, D, X1, X2, S2, S2in)
-    [[k5, k4], q_4, score_4]      = solver.Carbogenesis_LIN(alpha, D, qC, X1, X2, C, Cin)
-
+    # Single Parameter Regression
+    [k6, q_ME, score_ME] = solver.Methane_LIN(alpha, D, X2, qM)
+    [khyd, q_XT, score_XT]	= solver.Hydrolysis_LIN(D, XTin, XT)
+    [k1, q_AC, score_AC] = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
+    [kLa, q_CO2, score_CO2] = solver.Carbon_Dioxide_LIN(CO2, PC, KH, qC)
+    [[a, b], q_1, score_1] = solver.Substrate1_LIN(S1, alpha, D)
+    [[c, d, e, f], q_2, score_2] = solver.Substrate2_LIN(S2, alpha, D)
+    [[k6_k3, k6k2_k3k1], q_3, score_3] = solver.Methanogenesis_RATIO(D, qM, S2in, S2, S1in, S1, khyd, XT)
+    [[k4_k1, k5_k6], q_4, score_4] = solver.Carbogenesis_RATIO(D, qC, qM, Cin, C, S1in, S1, khyd, XT)
     
     # Parameter retrieving
     mu1m = 1/a
     Ks1  = q_1/0.11
-    
     mu2m = 1/c
     Ks2  = q_2/0.11
     KI   = 1/(e*mu2m)
     
+    k3   = k6 / k6_k3
+    k2   = k6k2_k3k1 / k6_k3 * k1
+    k4   = k4_k1 * k1
+    k5   = k5_k6 * k6 
+    
     # Model evaluation
     qM_Model = np.empty(len(D))
-    qC_Model = np.empty(len(D))
     XT_Model = np.empty(len(D))
-    AC_Model = np.empty(len(D))
     
     for i in range(0, len(D)):
         qM_Model[i] = rm.qMeval(k6, alpha, D[i], X2[i])
-        qC_Model[i] = rm.qCeval(kLa, C[i], pH[i], KH, PC[i], Kb)
         XT_Model[i] = rm.XTeval(khyd, D[i], XTin)
-        AC_Model[i] = rm.S1eval(k1, alpha, D[i], X1[i], khyd, S1in, XT[i])
 
     # print out results
-    fprint('RMSE', 'k6', k6, flag = CH4_min.success, r2 = r2_CH4['fun'](k6), itr=CH4_min.nit, funcall=solver.RMSE(qM, rm.qMeval(k6, alpha, D, X2)))
-    fprint('RMSE', 'khyd', khyd, flag = XT_min.success, r2 = r2_XT['fun'](khyd), itr=XT_min.nit, funcall=solver.RMSE(XT, rm.XTeval(khyd, D, XTin)))
-    fprint('LIN', 'k1', k1, score_AC)
-    fprint('LIN', 'kLa', kLa, score_CO2)
-    fprint('LIN', 'mu1m + Ks1', [mu1m, Ks1], score_1, intercept=q_1)
-    fprint('LIN', 'mu2m + Ks2 + KI', [mu2m, Ks2, KI], score_2, intercept=q_2)
-    fprint('LIN', 'k3 + k2', [k3, k2], score_3, intercept=q_3)
-    fprint('LIN', 'k5 + k4', [k5, k4], score_4, intercept=q_4)
+    fprint('LIN', 'k6', k6, score=score_ME, intercept=q_ME)
+    fprint('LIN', 'khyd', khyd, score=score_XT, intercept=q_XT)
+    fprint('LIN', 'k1', k1, score=score_AC, intercept=q_AC)
+    fprint('LIN', 'kLa', kLa, score=score_CO2)
+    fprint('LIN', 'mu1m + Ks1', [mu1m, Ks1], score=score_1, intercept=q_1)
+    fprint('LIN', 'mu2m + Ks2 + KI', [mu2m, Ks2, KI], score=score_2, intercept=q_2)
+    fprint('LIN', 'k3 + k2', [k3, k2], score=score_3, intercept=q_3)
+    fprint('LIN', 'k5 + k4', [k5, k4], score=score_4, intercept=q_4)
+
     
     
     # Visualization
@@ -85,8 +79,8 @@ def main():
     [X_CO2, Y_data_CO2, Y_model_CO2] = rm.CO2model(qC, CO2, KH, PC, kLa)
     [X_AC, Y_data_AC, Y_model_AC] = rm.ACmodel(alpha, D, S1in, S1, XT, X1, k1, khyd)
     [X_S1_1, X_S1_2, Y_data_S1, Y_model_S1] = rm.S1model(alpha, D, mu1m, Ks1, S1)
-    [X_ME_1, X_ME_2, Y_data_ME, Y_model_ME] = rm.MEmodel(alpha, D, X1, X2, S2, S2in, k2, k3)
-    [X_IC_1, X_IC_2, Y_data_IC, Y_model_IC] = rm.ICmodel(alpha, D, qC, X1, X2, C, Cin, k5, k4)
+    [X_ME_1, X_ME_2, Y_data_ME, Y_model_ME] = rm.MEmodel(D, qM, S2in, S2, S1in, S1, khyd, XT, k6, k3, k1, k2)
+    [X_IC_1, X_IC_2, Y_data_IC, Y_model_IC] = rm.ICmodel(D, qC, qM, Cin, C, S1in, S1, khyd, XT, k4, k1, k5, k6)
     
     regplot(X_CH4,  [Y_data_CH4, Y_model_CH4], 'D [1/d]', 'qM/X2 [1/d]', 'k6 regression - Methane Flowrate')
     regplot(X_CO2,  [Y_data_CO2, Y_model_CO2], 'CO2-KH*PC [mol/m3]', 'qC [mol/m3/d]', 'kLa regression - Carbon Dioxide Flowrate')
