@@ -1,7 +1,7 @@
 # Physical Constants
 Rgas = 8.2e-5
 Ka   = 1.5e-5
-Kb   = float(6.5e-7)
+Kb   = 6.5e-7
 Kc   = 4.5e-11
 
 MW_AAc = 60.052                                                  # [g/mol] Acetic Acid

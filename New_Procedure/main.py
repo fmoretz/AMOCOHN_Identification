@@ -1,121 +1,236 @@
-# import scientific libraries
+# AMOCO_HN with modified identification
+
+import math
 import numpy as np
+from scipy.integrate import odeint
+from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-from scipy.optimize import Bounds
-from sklearn.metrics import r2_score
 
-# import data and define the variables
-from solver.utility.dataimport import *
-from solver.utility.PhysConstants import *
-from solver.utility.ReactorConf import *
-from solver.utility.PostProcess import *
-import solver.eqRMSE as solver
-import solver.RegModel as rm
+from SS_Algebraic import*
 
-# create main function
-def main():
+# SYSTEM
 
-    # define the bounds
-    bd1 = Bounds([0], [5000])
-    bd2 = Bounds([0, 0], [5000, 5000])
-    bd3 = Bounds([0, 0, 0], [5000, 5000, 5000]) 
-    # define the initial values
-    v1 = (1,)
-    v2 = (1, 2,)
-    v3 = (1, 2, 3,)
-    
-    # define the contraints 
-    r2_CH4 = {'type': 'ineq','fun': lambda y: r2_score(qM, rm.qMeval(y, alpha, D, X2))}
-    r2_XT  = {'type': 'ineq','fun': lambda y: r2_score(XT, rm.XTeval(y, D, XTin))}
-    r2_CO2 = {'type': 'ineq','fun': lambda y: r2_score(qC, rm.qCeval(y, C, pH, KH, PC, Kb))}
-    r2_AC  = {'type': 'ineq','fun': lambda y: r2_score(S1, rm.ACeval(y, alpha, D, X1, XT_min.x, S1in, XT))}
-    
-    # Single Parameter Regression
-    [k6, q_ME, score_ME] = solver.Methane_LIN(alpha, D, X2, qM)
-    [khyd, q_XT, score_XT]	= solver.Hydrolysis_LIN(D, XTin, XT)
-    [k1, q_AC, score_AC] = solver.Acidogenesis_LIN(alpha, D, S1, X1, khyd, S1in, XT)
-    [kLa, q_CO2, score_CO2] = solver.Carbon_Dioxide_LIN(CO2, PC, KH, qC)
-    [[a, b], q_1, score_1] = solver.Substrate1_LIN(S1, alpha, D)
-    [[c, d, e, f], q_2, score_2] = solver.Substrate2_LIN(S2, alpha, D)
-    [[k6_k3, k6k2_k3k1], q_3, score_3] = solver.Methanogenesis_RATIO(D, qM, S2in, S2, S1in, S1, khyd, XT)
-    [[k4_k1, k5_k6], q_4, score_4] = solver.Carbogenesis_RATIO(D, qC, qM, Cin, C, S1in, S1, khyd, XT)
-    
-    # Parameter retrieving
-    mu1m = 1/a
-    Ks1  = q_1/0.11
-    mu2m = 1/c
-    Ks2  = q_2/0.11
-    KI   = 1/(e*mu2m)
-    
-    k3   = k6 / k6_k3
-    k2   = k6k2_k3k1 / k6_k3 * k1
-    k4   = k4_k1 * k1
-    k5   = k5_k6 * k6 
-    
-    # Model evaluation
-    qM_Model = np.empty(len(D))
-    XT_Model = np.empty(len(D))
-    
-    for i in range(0, len(D)):
-        qM_Model[i] = rm.qMeval(k6, alpha, D[i], X2[i])
-        XT_Model[i] = rm.XTeval(khyd, D[i], XTin)
+y0 = [SSTATE[0], SSTATE[1], SSTATE[2], SSTATE[3], SSTATE[4], SSTATE[5], SSTATE[6]]
 
-    # print out results
-    fprint('LIN', 'k6', k6, score=score_ME, intercept=q_ME)
-    fprint('LIN', 'khyd', khyd, score=score_XT, intercept=q_XT)
-    fprint('LIN', 'k1', k1, score=score_AC, intercept=q_AC)
-    fprint('LIN', 'kLa', kLa, score=score_CO2)
-    fprint('LIN', 'mu1m + Ks1', [mu1m, Ks1], score=score_1, intercept=q_1)
-    fprint('LIN', 'mu2m + Ks2 + KI', [mu2m, Ks2, KI], score=score_2, intercept=q_2)
-    fprint('LIN', 'k3 + k2', [k3, k2], score=score_3, intercept=q_3)
-    fprint('LIN', 'k5 + k4', [k5, k4], score=score_4, intercept=q_4)
+def f_Model_Deviations_Simple(x,t,alfa,mu_max,Ks,KI2,KH,Pt,kLa,D,y_in,k,kd,N_bac,N_S1):
 
-    
-    
-    # Visualization
-    [X_CH4, Y_data_CH4, Y_model_CH4] = rm.CH4model(alpha, D, X2, qM, k6)
-    [X_XT, Y_data_XT, Y_model_XT] = rm.XTmodel(D, XTin, XT, khyd)
-    [X_CO2, Y_data_CO2, Y_model_CO2] = rm.CO2model(qC, CO2, KH, PC, kLa)
-    [X_AC, Y_data_AC, Y_model_AC] = rm.ACmodel(alpha, D, S1in, S1, XT, X1, k1, khyd)
-    [X_S1_1, X_S1_2, Y_data_S1, Y_model_S1] = rm.S1model(alpha, D, mu1m, Ks1, S1)
-    [X_ME_1, X_ME_2, Y_data_ME, Y_model_ME] = rm.MEmodel(D, qM, S2in, S2, S1in, S1, khyd, XT, k6, k3, k1, k2)
-    [X_IC_1, X_IC_2, Y_data_IC, Y_model_IC] = rm.ICmodel(D, qC, qM, Cin, C, S1in, S1, khyd, XT, k4, k1, k5, k6)
-    
-    regplot(X_CH4,  [Y_data_CH4, Y_model_CH4], 'D [1/d]', 'qM/X2 [1/d]', 'k6 regression - Methane Flowrate')
-    regplot(X_CO2,  [Y_data_CO2, Y_model_CO2], 'CO2-KH*PC [mol/m3]', 'qC [mol/m3/d]', 'kLa regression - Carbon Dioxide Flowrate')
-    regplot(X_XT,   [Y_data_XT,  Y_model_XT],  'XT [kg/m3]', 'D*(XTin-XT) [kg/m3/d]', 'khyd regression - Hydrolysis')
-    regplot(X_AC,   [Y_data_AC,  Y_model_AC],  'alpha*D*X1 [kg/m3/d]', 'D*(S1in-S1)+khyd*XT [kg/m3/d]', 'k1 regression - Acidogenesis')
-    regplot(
-            x=[X_S1_1, X_S1_2], 
-            y=[Y_data_S1, Y_model_S1, Y_data_S1, Y_model_S1], 
-            xlabel=['alpha*D*S1/0.9 [kg/m3/d]', 'alpha*D/0.9 [d-1]'],
-            ylabel=['S1 [kg/m3]', 'S1 [kg/m3]'],
-            title='mu1m & Ks1regression - Substrate 1',
-            subplot=True
-            )
-    regplot(
-            x=[X_ME_1, X_ME_2], 
-            y=[Y_data_ME, Y_model_ME, Y_data_ME, Y_model_ME], 
-            xlabel=['alpha*D*X2 [kg/m3/d]', '-alpha*D*X1 [kg/m3/d]'],
-            ylabel=['D*(S2in-S2) [kg/m3/d]', 'D*(S2in-S2) [kg/m3/d]'],
-            title='k2 & k3 regression - Methanogenesis',
-            subplot=True
-            )
-    regplot(
-            x=[X_IC_1, X_IC_2], 
-            y=[Y_data_IC, Y_model_IC, Y_data_IC, Y_model_IC], 
-            xlabel=['alpha*D*X2 [kg/m3/d]', '-alpha*D*X1 [kg/m3/d]'],
-            ylabel=['qC-D*(Cin-C) [kg/m3/d]', 'qC-D*(Cin-C) [kg/m3/d]'],
-            title='k4 & k5 regression - Inorganic Carbon',
-            showbool=True,
-            subplot=True
-            )
-    
-    multiplot([Y_data_S1, Y_model_S1], [X_S1_1, X_S1_2], ['alpha*D*S1/0.9 [kg/m3/d]','alpha*D/0.9 [d-1]'], 'S1 [kg/m3]', 'mu1m and Ks1 regression - Substrate 1')
+    XT, X1, X2, Z, S1, S2, C = x
 
-    return 0;
+    if t < 20 or t > 100:
+        S1in = y_in[0]      # [gCOD/L]
+        S2in = y_in[1]      # [mmol/L]
+        Cin  = y_in[2]      # [mmol/L]
+        Zin  = y_in[3]      # [mmol/L]
+        XTin = y_in[4]      # [gCOD/L]
+    else:
+        S1in = y_in[0]      # [gCOD/L]   
+        S2in = y_in[1]      # [mmol/L]
+        Cin  = y_in[2]      # [mmol/L]
+        Zin  = y_in[3]      # [mmol/L]
+        XTin = 1.2*y_in[4]  # [gCOD/L]
 
-if __name__ == "__main__":
-    main()
-    
+    mu1 = mu_max[0]*(S1/(S1+Ks[0]))                                                                  # Monod
+    mu2 = mu_max[1]*(S2/(S2+Ks[1]+S2**2/KI2))                                                        # Haldane
+
+    qM  = k[5]*mu2*X2                                                                                # [mmol/L/day] - Methane molar flow 
+    CO2 = C + S2 - Z                                                                                 # [mmol/L]     - CO2 Dissolved
+    phi = CO2 + KH*Pt + qM/kLa
+    Pc  = (phi - (phi**2- 4*KH*Pt*CO2)**0.5)/(2*KH)                                                  # [atm] - Partial pressure CO2
+    qC  = kLa*(CO2 - KH*Pc)                                                                          # [mmol/L/d] - Carbon Molar Flow
+                                             
+
+    dXT = D*(XTin - XT) - k[6]*XT                                                                    # Evolution of particulate
+    dX1 = (mu1 - alfa*D - kd[0])*X1                                                                  # Evolution of biomass 1 (acidogen.)
+    dX2 = (mu2 - alfa*D - kd[1])*X2                                                                  # Evolution of biomass 2 (methanogen)
+    dZ  = D*(Zin - Z) + (k[0]*N_S1 - N_bac)*mu1*X1 - N_bac*mu2*X2 + kd[0]*N_bac*X1 + kd[1]*N_bac*X2  # Evolution of alcalinity;
+    dS1 = D*(S1in - S1) - k[0]*mu1*X1 + k[6]*XT                                                      # Evolution of organic substrate
+    dS2 = D*(S2in - S2) + k[1]*mu1*X1 - k[2]*mu2*X2                                                      # Evolution of VFA
+    dC  = D*(Cin - C)   + k[3]*mu1*X1 + k[4]*mu2*X2 - qC                                                 # Evolution of inorganic carbon
+
+    dxdt = [dXT, dX1, dX2, dZ, dS1, dS2, dC]
+
+    return dxdt
+
+tspan = np.linspace(1,200,10000)
+YOUT = odeint(f_Model_Deviations_Simple,y0,tspan,args=(alfa, mu_max, Ks, KI2, KH, Pt, kLa, D, y_in, k, kd, N_bac, N_S1))
+
+XT = YOUT[:,0]              # [gCOD/L] - Particulate 
+X1 = YOUT[:,1]              # [g/L]    - Acidogenics  Bacteria  
+X2 = YOUT[:,2]              # [g/L]    - Methanogenic Bacteria
+Z  = YOUT[:,3]              # [mmol/L] - Total Alkalinity
+S1 = YOUT[:,4]              # [g/L]    - Organic Soluble Substrate
+S2 = YOUT[:,5]              # [mmol/L] - VFA dissolved
+C  = YOUT[:,6]              # [mmol/L] - Inorganic Carbon Dissolved
+
+# Solver Output
+mu1 = np.empty(len(XT))
+mu2 = np.empty(len(XT))
+CO2 = np.empty(len(XT))
+B   = np.empty(len(XT))
+phi = np.empty(len(XT))
+p_C = np.empty(len(XT))
+q_C = np.empty(len(XT))
+q_M = np.empty(len(XT))
+pH  = np.empty(len(XT))
+
+
+
+for x in range(len(XT)):
+    mu1[x] = mu_max[0]*(S1[x]/(S1[x]+Ks[0]))                     # [1/d]      - Specific Growth Rate for X1 (Monod)
+    mu2[x] = mu_max[1]*(S2[x]/(S2[x]+Ks[1]+S2[x]**2/KI2))        # [1/d]      - Specific Growth Rate for X2 (Haldane)
+    CO2[x] = C[x] + S2[x] - Z[x]                                 # [mmol/L]   - Dissolved CO2
+    B[x]   = Z[x] - S2[x]                                        # [mmol/L]   - Alkalinity
+    phi[x] = CO2[x] + KH*Pt + k[5]/kLa*mu2[x]*X2[x]
+    p_C[x]  = (phi[x] - (phi[x]**2- 4*KH*Pt*CO2[x])**0.5)/(2*KH) # [atm]      - CO2 Partial Pressure
+    q_C[x] = kLa*(CO2[x] - KH*p_C[x])                            # [mmol/L/d] - CO2 Outlet Molar Flow
+    q_M[x] = k[5]*mu2[x]*X2[x]                                   # [mmol/L/d] - CH4 Outlet Molar Flow
+    pH[x]  = np.real(-np.log10(Kb*CO2[x]/B[x]))                  # [-]        - System pH
+
+q_tot = q_C+q_M                                                  # [mmol/L/d] - Outlet global molar flow  
+x_M   = np.divide(q_M,q_tot)                                     # [-]        - CH4 Mole fraction
+q_C_W = q_C*44/1000                                              # [g/L/d]    - CO2 Outlet mass flow of
+q_M_W = q_M*16/1000                                              # [g/L/d]    - CH4 Outlet mass flow  
+q_tot_W = q_C_W + q_M_W                                          # [g/L/d]    - Outlet global mass flow  
+x_M_W   = q_M_W/q_tot_W                                          # [-]        - CH4 Weight Fraction      
+
+print("Mole fraction of methane in the gas at the end",float(x_M[-1]))
+print("Mass fraction of methane in the gas at the end",float(x_M_W[-1]))
+plt.close("all")
+
+
+plt.figure(1)
+ax1 = plt.subplot()
+ax1.plot(tspan, X1, label="Acidogenics")
+ax1.plot(tspan, X2, label="Methanogens")
+ax1.set_xlabel('time [d]')
+ax1.set_ylabel('Microbial Concentration [g/L]')
+ax1.grid(True)
+ax1.legend()
+
+ax2 = ax1.twinx()
+color = 'tab:red'
+ax2.set_ylabel('pH Value [-]', color = color)
+ax2.plot(tspan, pH, linestyle='dashed',color =color, label="pH")
+ax2.tick_params(axis='y', labelcolor=color)
+
+plt.tight_layout()
+
+plt.figure(2)
+sub1 = plt.subplot(2,2,1)
+sub1.plot(tspan,q_M,label="CH4")
+sub1.plot(tspan,q_C,label="CO2")
+sub1.set_ylabel('Gas Flowrate [mmol/L/d]')
+sub1.set_xlabel('Time [d]')
+sub1.grid(True)
+sub1.legend()
+
+sub2 = plt.subplot(2,2,2)
+sub2.plot(tspan,Z,label="Alkalinity")
+sub2.plot(tspan,C,label="In. Carbon")
+sub2.set_ylabel('Inorganics Conc. [mmol/L]')
+sub2.set_xlabel('Time [d]')
+sub2.grid(True)
+sub2.legend()
+
+sub3 = plt.subplot(2,2,3)
+sub3.plot(tspan,XT,label="Particulate (XT)")
+sub3.plot(tspan,S1,label="COD (S1)")
+sub3.set_ylabel('Substrates Conc. [g/L]')
+sub3.set_xlabel('Time [d]')
+sub3.grid(True)
+sub3.legend()
+
+sub4 = plt.subplot(2,2,4)
+sub4.plot(tspan,S1,label="COD (S1)")
+sub4.plot(tspan,S2,label="VFA (S2) [mmol/L]")
+sub4.set_ylabel('Substrates Conc. ')
+sub4.set_xlabel('Time [d]')
+sub4.grid(True)
+sub4.legend()
+
+plt.figure(3)
+sub1 = plt.subplot(6,2,1)
+sub1.plot(tspan,S1/S1[0])
+sub1.set_ylabel('S1*')
+sub1.tick_params(labelbottom=False)
+sub1.set_xlim(tspan[0],tspan[-1])
+sub1.grid(True)
+
+sub2 = plt.subplot(6,2,2)
+sub2.plot(tspan,S2/S2[0])
+sub2.set_ylabel('S2*')
+sub2.tick_params(labelbottom=False)
+sub2.set_xlim(tspan[0],tspan[-1])
+sub2.grid(True)
+
+sub3 = plt.subplot(6,2,3)
+sub3.plot(tspan,X1/X1[0])
+sub3.set_ylabel('X1*')
+sub3.tick_params(labelbottom=False)
+sub3.set_xlim(tspan[0],tspan[-1])
+sub3.grid(True)
+
+sub4 = plt.subplot(6,2,4)
+sub4.plot(tspan,X2/X2[0])
+sub4.set_ylabel('X2*')
+sub4.tick_params(labelbottom=False)
+sub4.set_xlim(tspan[0],tspan[-1])
+sub4.grid(True)
+
+sub5 = plt.subplot(6,2,5)
+sub5.plot(tspan,C/C[0])
+sub5.set_ylabel('C*')
+sub5.tick_params(labelbottom=False)
+sub5.set_xlim(tspan[0],tspan[-1])
+sub5.grid(True)
+
+sub6 = plt.subplot(6,2,6)
+sub6.plot(tspan,Z/Z[0])
+sub6.set_ylabel('Z*')
+sub6.tick_params(labelbottom=False)
+sub6.set_xlim(tspan[0],tspan[-1])
+sub6.grid(True)
+
+sub7 = plt.subplot(6,2,7)
+sub7.plot(tspan,CO2/CO2[0])
+sub7.set_ylabel('CO2*')
+sub7.tick_params(labelbottom=False)
+sub7.set_xlim(tspan[0],tspan[-1])
+sub7.grid(True)
+
+sub8 = plt.subplot(6,2,8)
+sub8.plot(tspan,B/B[0])
+sub8.set_ylabel('B*')
+sub8.tick_params(labelbottom=False)
+sub8.set_xlim(tspan[0],tspan[-1])
+sub8.grid(True)
+
+sub9 = plt.subplot(6,2,9)
+sub9.plot(tspan,pH/pH[0])
+sub9.set_ylabel('pH*')
+sub9.tick_params(labelbottom=False)
+sub9.set_xlim(tspan[0],tspan[-1])
+sub9.grid(True)
+
+sub10 = plt.subplot(6,2,10)
+sub10.plot(tspan,XT/XT[0])
+sub10.set_ylabel('XT*')
+sub10.tick_params(labelbottom=False)
+sub10.set_xlim(tspan[0],tspan[-1])
+sub10.grid(True)
+
+sub11 = plt.subplot(6,2,11)
+sub11.plot(tspan,q_C/q_C[0])
+sub11.set_ylabel('q_C*')
+sub11.set_xlabel('Time [d]')
+sub11.set_xlim(tspan[0],tspan[-1])
+sub11.grid(True)
+
+sub12 = plt.subplot(6,2,12)
+sub12.plot(tspan,q_M/q_M[0])
+sub12.set_ylabel('q_M*')
+sub12.set_xlabel('Time [d]')
+sub12.set_xlim(tspan[0],tspan[-1])
+sub12.grid(True)
+
+plt.show()
