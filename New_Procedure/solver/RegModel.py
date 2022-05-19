@@ -150,7 +150,7 @@ def MEmodel(D, qM, S2in, S2, S1in, S1, khyd, XT, k6, k3, k1, k2):
         X_ME_1[i]       = D[i] * (S2in - S2[i])
         X_ME_2[i]       = D[i] * (S1in - S1[i]) + khyd * XT[i]
         Y_data_ME[i]    = qM[i]
-        Y_model_ME[i]   = k6/k3 * X_ME_2[i] + k6*k2/(k3*k1) * X_ME_1[i]
+        Y_model_ME[i]   = k6/k3 * X_ME_1[i] + k6*k2/(k3*k1) * X_ME_2[i]
 
     return X_ME_1, X_ME_2, Y_data_ME, Y_model_ME
 
