@@ -93,6 +93,8 @@ q_M_W = q_M*16/1000                                              # [g/L/d]    - 
 q_tot_W = q_C_W + q_M_W                                          # [g/L/d]    - Outlet global mass flow  
 x_M_W   = q_M_W/q_tot_W                                          # [-]        - CH4 Weight Fraction      
 
+print(f'mu1,max: {mu1_max}; Ks1:  {KS1}; Cd1: {C_d[0]}')
+print(f'mu2,max: {mu2_max}; Ks2:  {KS2}; KI2: {KI2}; Cd2: {C_d[1]}')
 print("Mole fraction of methane in the gas at the end",float(x_M[-1]))
 print("Mass fraction of methane in the gas at the end",float(x_M_W[-1]))
 plt.close("all")

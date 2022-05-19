@@ -1,6 +1,9 @@
 # IDENTIFICATION
 import matplotlib.pyplot as plt
 import numpy as np
+import statsmodels.api as sm
+
+import pylops
 from scipy.optimize import curve_fit
 from sklearn.linear_model import LinearRegression
 
@@ -33,36 +36,42 @@ XT_in = float(T2["XTin"])    # [gCOD/L]
 
 # KINETICS
 
-Xr1 = (Dil*S1, Dil)
-Yr1 = S1
+Yr1 = np.array(S1)
 
-def func1(X,a,b):
-    x1,x2 = X
-    return a*x1 +a*b*x2 + b*C_d[0]/(1-C_d[0])
+X11 = np.array(Dil*S1).reshape((-1,1))
+X12 = np.array(Dil).reshape((-1,1))
+Xr1 = np.hstack((X11,X12))
 
-popt1, pcov1 = curve_fit(func1, Xr1, Yr1)
+mdl1 = LinearRegression(positive=True).fit(Xr1,Yr1)
 
-KS1 = popt1[1]                          # [1/d]      Max biomass growth rate
-mu1_max = alfa/(1-C_d[0])/popt1[0]      # [g/L]      Half saturation constant
+a,b = mdl1.coef_
+c = mdl1.intercept_
+
+KS1 = a                                 # [g/L] - Half saturation constant
+C_d[0]  = c/(KS1 + c)                   # [-]   - Proportionality Decay
+mu1_max = KS1*alfa/(1-C_d[0])/b         # [1/d] - Max biomass growth rate
+
+
+# Methanogens
 
 Xr2 = (Dil, S2)
 Yr2 = S2
 
-def func2(X,a,b,c):
+def func2(X,a,b,c,d):
     x1,x2 = X
-    return a*x1*x2 + a*b*x1 + C_d[1]/(1-C_d[1])*b + a*c*x1*(x2**2) + C_d[1]/(1-C_d[1])*c*(x2**2)
+    return a*x1*x2 + a*b*x1 + d/(1-d)*b + a*c*x1*(x2**2) + d/(1-d)*c*(x2**2)
 
-guess2 = [10, 3, 1/300]
-popt2, pcov2 = curve_fit(func2, Xr2, Yr2, guess2)
+guess2 = [10, 3, 1/300, 0.01]
+beta2, pcov2 = curve_fit(func2, Xr2, Yr2, guess2)
 
-KS2     = popt2[1];
-mu2_max = alfa/(1-C_d[1])/popt2[0];
-KI2     = 1/popt2[2];
+KS2     = beta2[1]                          # [g/L] - Half saturation constant
+C_d[1]  = beta2 [3]                         # [-]   - Proportionality Decay   
+mu2_max = alfa/(1-C_d[1])/beta2[0]          # [1/d] - Max biomass growth rate
+KI2     = 1/beta2[2]                        # [mmol/L]   Inhibition constant for S2
 
-
-mu_max = (mu1_max, mu2_max)         # [1/d]      Max biomass growth rate
-Ks     = (KS1, KS2)                 # [g/L]      Half saturation constant
-KI2    = np.abs(KI2)                # [mmol/L]   Inhibition constant for S2
+mu_max = (mu1_max, mu2_max)                 # [1/d]      Max biomass growth rate
+Ks     = (KS1, KS2)                         # [g/L]      Half saturation constant
+KI2    = np.abs(KI2)                              # [mmol/L]   Inhibition constant for S2
 kd     = np.multiply(C_d,mu_max)
 
 # Hydrolysis
@@ -189,6 +198,8 @@ k5 = DD*k6
 
 k = [k1, k2, k3, k4, k5, k6, k_hyd]
 
+print(f'mu1,max: {mu1_max}; Ks1:  {KS1}; Cd1: {C_d[0]}')
+print(f'mu2,max: {mu2_max}; Ks2:  {KS2}; KI2: {KI2}; Cd2: {C_d[1]}')
 print(f'k1: {k1}, intercept: {int4}')
 print(f'k2: {k2}, intercept: {int6}')
 print(f'k3: {k3}, intercept: {int6}')
