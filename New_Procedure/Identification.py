@@ -57,21 +57,24 @@ mu1_max = KS1*alfa/(1-C_d[0])/b         # [1/d] - Max biomass growth rate
 Xr2 = (Dil, S2)
 Yr2 = S2
 
+
 def func2(X,a,b,c,d):
     x1,x2 = X
-    return a*x1*x2 + a*b*x1 + d/(1-d)*b + a*c*x1*(x2**2) + d/(1-d)*c*(x2**2)
+    
+    return alfa/(1-d)/b*x1*x2 + alfa*a/(1-d)/b*x1 + alfa/(1-d)/b/c*x1*(x2**2) + d/(1-d)/c*(x2**2) + d/(1-d)*a
 
-guess2 = [10, 3, 1/300, 0.01]
-beta2, pcov2 = curve_fit(func2, Xr2, Yr2, guess2)
+guess2 = [10, 3, 300, 0.01]
+param_bounds = ([0, 0, 0, 0], [np.inf, np.inf, np.inf, np.inf])
+beta2, pcov2 = curve_fit(func2, Xr2, Yr2, p0=guess2)
 
-KS2     = beta2[1]                          # [g/L] - Half saturation constant
-C_d[1]  = beta2 [3]                         # [-]   - Proportionality Decay   
-mu2_max = alfa/(1-C_d[1])/beta2[0]          # [1/d] - Max biomass growth rate
-KI2     = 1/beta2[2]                        # [mmol/L]   Inhibition constant for S2
+KS2     = beta2[0]                          # [g/L]    - Half saturation constant                          
+mu2_max = beta2[1]                          # [1/d]    - Max biomass growth rate        
+KI2     = beta2[2]                          # [mmol/L] - Inhibition constant for S2
+C_d[1]  = beta2[3]                          # [-]      - Proportionality Decay
 
-mu_max = (mu1_max, mu2_max)                 # [1/d]      Max biomass growth rate
-Ks     = (KS1, KS2)                         # [g/L]      Half saturation constant
-KI2    = np.abs(KI2)                              # [mmol/L]   Inhibition constant for S2
+mu_max = (mu1_max, mu2_max)                 # [1/d]    - Max biomass growth rate
+Ks     = (KS1, KS2)                         # [g/L]    - Half saturation constant
+KI2    = np.abs(KI2)                        # [mmol/L] - Inhibition constant for S2
 kd     = np.multiply(C_d,mu_max)
 
 # Hydrolysis
@@ -84,13 +87,12 @@ scoreh1 = mdl_hydr1.score(np.array(X_hydr).reshape(-1,1), np.array(Y_hydr))
 scoreh2 = mdl_hydr2.score(np.array(X_hydr).reshape(-1,1), np.array(Y_hydr))
 
 if scoreh1 > scoreh2:
-    k_hyd = mdl_hydr1.coef_
-    int_hyd = 'Yes'
+    k_hyd   = mdl_hydr1.coef_
     mdl_hyd = mdl_hydr1
 else:
-    k_hyd = mdl_hydr2.coef_
-    int_hyd = 'No'
+    k_hyd   = mdl_hydr2.coef_
     mdl_hyd = mdl_hydr2
+int_hyd = mdl_hyd.intercept_
 
 # Physical - L/G TRANSFER
 
@@ -106,14 +108,14 @@ score32 = mdl32.score(np.array(X3r).reshape(-1,1), np.array(Y3r))
 
 if score31 > score32:
     kLa = mdl31.coef_
-    int3 = 'Yes'
     mdl3 = mdl31
 else:
     kLa = mdl32.coef_
-    int3 = 'No'
     mdl3 = mdl32
+int3 = mdl3.intercept_
 
 # Yield coefficients: [CODdeg, VFAprof, VFAcons, CO2prod(1), CO2prod(2), CH4prod, hydrolysis]
+
 mu_1 = alfa*Dil + C_d[0]*mu1_max
 mu_2 = alfa*Dil + C_d[1]*mu2_max
 
@@ -125,13 +127,12 @@ score41 = mdl41.score(np.array(X4r).reshape(-1,1), np.array(Y4r))
 score42 = mdl42.score(np.array(X4r).reshape(-1,1), np.array(Y4r))
 if score41 > score42:
     k1 = mdl41.coef_
-    int4 = 'Yes'
     mdl4 = mdl41
 else:
     k1 = mdl42.coef_
-    int4 = 'No'
     mdl4 = mdl42
-   
+int4 = mdl4.intercept_
+
 X5r = mu_2
 Y5r = q_M/X_2
 mdl51 = LinearRegression(fit_intercept=True, positive=True).fit(np.array(X5r).reshape((-1,1)),np.array(Y5r))
@@ -140,13 +141,12 @@ score51 = mdl51.score(np.array(X5r).reshape(-1,1), np.array(Y5r))
 score52 = mdl52.score(np.array(X5r).reshape(-1,1), np.array(Y5r))
 if score51 > score52:
     k6 = mdl51.coef_
-    int5 = 'Yes'
     mdl5 = mdl51
 else:
     k6 = mdl52.coef_
-    int5 = 'No'
     mdl5 = mdl52
-    
+int5 = mdl5.intercept_
+
 X61 = np.array(Dil*(S2_in-S2)).reshape((-1,1))
 X62 = np.array(Dil*(S1_in-S1) + k_hyd*XT).reshape((-1,1))
 X6r = np.hstack((X61,X62))
@@ -160,14 +160,13 @@ score62 = mdl62.score(X6r, Y6r)
 if score61 > score62:
     AA = mdl61.coef_[0]
     BB = mdl61.coef_[1]/AA
-    int6 = 'Yes'
     mdl6 = mdl61
 else:
     AA = mdl62.coef_[0]
     BB = mdl62.coef_[1]/AA
-    int6 = 'No'
     mdl6 = mdl62
-        
+int6 = mdl6.intercept_
+
 X71 = np.array(Dil*(S1_in-S1) + k_hyd*XT).reshape((-1,1))
 X72 = np.array(q_M).reshape((-1,1))
 X7r = np.hstack((X71,X72))
@@ -181,15 +180,13 @@ score72 = mdl72.score(X7r, Y7r)
 if score71 > score72:
     CC = mdl71.coef_[0]
     DD = mdl71.coef_[1]
-    int7 = 'Yes'
     mdl7 = mdl71
-    print(f'Score: {score71}')
+    
 else:
     CC = mdl72.coef_[0]
     DD = mdl72.coef_[1]
-    int7 = 'No'
     mdl7 = mdl72
-    print(f'Score: {score72}')
+int7 = mdl7.intercept_
 
 k2 = BB*k1
 k3 = k6/AA

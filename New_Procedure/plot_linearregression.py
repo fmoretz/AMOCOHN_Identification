@@ -6,13 +6,13 @@ from dataimport import*
 
 plt.figure(1)
 plt.title('Kinetic Parameters X1')
-plt.plot(func1(Xr1,popt1[0],popt1[1]),'o',label = 'Estimated')
-plt.plot(Yr1,'*', label = 'Real data')
+plt.plot(Xr1, Yr1,'o',label = 'Original Data')
+plt.plot(Xr1, mdl1.intercept_ + mdl1.coef_[0]*X11 + mdl1.coef_[1]*X12, label = 'fitting')
 plt.legend()
 
 plt.figure(2)
 plt.title('Kinetic Parameters X2')
-plt.plot(func2(Xr2,popt2[0],popt2[1],popt2[2]), 'o',label = 'Estimated')
+plt.plot(func2(Xr2,beta2[0],beta2[1],beta2[2],beta2[3]), 'o',label = 'Estimated')
 plt.plot(Yr2,'*', label = 'Real data')
 plt.legend()
 

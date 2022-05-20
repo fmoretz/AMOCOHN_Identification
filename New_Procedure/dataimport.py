@@ -6,7 +6,7 @@ datasets = ["amoco_HN","provaADM1"]
 simname  = datasets[int(name_index) -1]
 print("Data are from:",simname)
 
-folder  =  r'C:\Users\fede1\OneDrive - Politecnico di Milano\Desktop\Tesi\Constant Minimization Rocca'
+folder  =  r'/Users/fmoretta/Desktop/AD-OCS/AD-OCS/data'
 reading_path =  folder + "/" + simname + "py"+ ".xlsx"
 
 colnames = ["HRT","S1","XT", "S2", "X1", "X2", "Z", "C","CO2","B", "pH", "q_C", "P_C", "q_CH4"]
