@@ -1,9 +1,6 @@
 # IDENTIFICATION
 import matplotlib.pyplot as plt
 import numpy as np
-import statsmodels.api as sm
-
-import pylops
 from scipy.optimize import curve_fit
 from sklearn.linear_model import LinearRegression
 
