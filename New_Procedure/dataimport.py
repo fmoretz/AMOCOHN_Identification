@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 print('Choose a datasets: \n 1 -> AMOCO_HN \n 2 -> provaADM1')
 name_index = input("->")
@@ -6,8 +7,10 @@ datasets = ["amoco_HN","provaADM1"]
 simname  = datasets[int(name_index) -1]
 print("Data are from:",simname)
 
-folder  =  r'C:\Users\fede1\Documents\GitHub\AMOCO_HN_Id\AMOCOHN_Identification\data'
-reading_path =  folder + "/" + simname + "py"+ ".xlsx"
+filename: Path = simname + 'py.xlsx'
+folder: Path = Path(Path.cwd())
+folder: Path = folder.joinpath('data')
+reading_path =  (folder/filename)
 
 colnames = ["HRT","S1","XT", "S2", "X1", "X2", "Z", "C","CO2","B", "pH", "q_C", "P_C", "q_CH4"]
 
