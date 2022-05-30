@@ -7,7 +7,7 @@ datasets = ["amoco_HN","provaADM1"]
 simname  = datasets[int(name_index) -1]
 print("Data are from:",simname)
 
-filename: Path = simname + 'py.xlsx'
+filename: Path = simname + '.xlsx'
 folder: Path = Path(Path.cwd())
 folder: Path = folder.joinpath('data')
 reading_path =  (folder/filename)
