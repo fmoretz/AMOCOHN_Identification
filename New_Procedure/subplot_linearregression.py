@@ -104,5 +104,5 @@ plt.ylabel("T", fontsize=fontsize)     # -----
 plt.yticks(np.linspace(0, max(Y7r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X72), max(X72), numticks), fontsize=fontsize)
 
-# plt.show()
-plt.savefig("subplot_w_labels.png", format="png", dpi=1200)
+plt.show()
+# plt.savefig("subplot_w_labels.png", format="png", dpi=1200)
