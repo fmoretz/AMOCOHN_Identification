@@ -5,54 +5,22 @@ import numpy as np
 from scipy.integrate import odeint
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
+from SS_Algebraic import* # Import the function to calculate SS
+from AMOCO_HN_ODE import f_Model_Deviations_AM2HN
 
-from SS_Algebraic import*
+from Influent import*
+from Identification import*
+
+
+
 
 # SYSTEM
-
+SSTATE = Steady_States_Assessment(y_in, k, kd, alfa, mu_max, Ks, KI2, KH, Pt, kLa, D, N_bac, N_S1)
 y0 = [SSTATE[0], SSTATE[1], SSTATE[2], SSTATE[3], SSTATE[4], SSTATE[5], SSTATE[6]]
 
-def f_Model_Deviations_Simple(x,t,alfa,mu_max,Ks,KI2,KH,Pt,kLa,D,y_in,k,kd,N_bac,N_S1):
-
-    XT, X1, X2, Z, S1, S2, C = x
-
-    if t < 20 or t > 100:
-        S1in = y_in[0]      # [gCOD/L]
-        S2in = y_in[1]      # [mmol/L]
-        Cin  = y_in[2]      # [mmol/L]
-        Zin  = y_in[3]      # [mmol/L]
-        XTin = y_in[4]      # [gCOD/L]
-    else:
-        S1in = y_in[0]      # [gCOD/L]   
-        S2in = y_in[1]      # [mmol/L]
-        Cin  = y_in[2]      # [mmol/L]
-        Zin  = y_in[3]      # [mmol/L]
-        XTin = 1.2*y_in[4]  # [gCOD/L]
-
-    mu1 = mu_max[0]*(S1/(S1+Ks[0]))                                                                  # Monod
-    mu2 = mu_max[1]*(S2/(S2+Ks[1]+S2**2/KI2))                                                        # Haldane
-
-    qM  = k[5]*mu2*X2                                                                                # [mmol/L/day] - Methane molar flow 
-    CO2 = C + S2 - Z                                                                                 # [mmol/L]     - CO2 Dissolved
-    phi = CO2 + KH*Pt + qM/kLa
-    Pc  = (phi - (phi**2- 4*KH*Pt*CO2)**0.5)/(2*KH)                                                  # [atm] - Partial pressure CO2
-    qC  = kLa*(CO2 - KH*Pc)                                                                          # [mmol/L/d] - Carbon Molar Flow
-                                             
-
-    dXT = D*(XTin - XT) - k[6]*XT                                                                    # Evolution of particulate
-    dX1 = (mu1 - alfa*D - kd[0])*X1                                                                  # Evolution of biomass 1 (acidogen.)
-    dX2 = (mu2 - alfa*D - kd[1])*X2                                                                  # Evolution of biomass 2 (methanogen)
-    dZ  = D*(Zin - Z) + (k[0]*N_S1 - N_bac)*mu1*X1 - N_bac*mu2*X2 + kd[0]*N_bac*X1 + kd[1]*N_bac*X2  # Evolution of alcalinity;
-    dS1 = D*(S1in - S1) - k[0]*mu1*X1 + k[6]*XT                                                      # Evolution of organic substrate
-    dS2 = D*(S2in - S2) + k[1]*mu1*X1 - k[2]*mu2*X2                                                      # Evolution of VFA
-    dC  = D*(Cin - C)   + k[3]*mu1*X1 + k[4]*mu2*X2 - qC                                                 # Evolution of inorganic carbon
-
-    dxdt = [dXT, dX1, dX2, dZ, dS1, dS2, dC]
-
-    return dxdt
 
 tspan = np.linspace(1,200,10000)
-YOUT = odeint(f_Model_Deviations_Simple,y0,tspan,args=(alfa, mu_max, Ks, KI2, KH, Pt, kLa, D, y_in, k, kd, N_bac, N_S1))
+YOUT = odeint(f_Model_Deviations_AM2HN,y0,tspan,args=(alfa, mu_max, Ks, KI2, KH, Pt, kLa, D, y_in, k, kd, N_bac, N_S1))
 
 XT = YOUT[:,0]              # [gCOD/L] - Particulate 
 X1 = YOUT[:,1]              # [g/L]    - Acidogenics  Bacteria  
@@ -235,4 +203,4 @@ sub12.set_xlabel('Time [d]')
 sub12.set_xlim(tspan[0],tspan[-1])
 sub12.grid(True)
 
-plt.show()
+# plt.show()

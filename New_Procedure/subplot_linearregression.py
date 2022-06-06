@@ -52,47 +52,47 @@ plt.subplot(3,3,3)
 plt.plot(X3r, mdl3.intercept_ + mdl3.coef_*X3r, linestyle=linestyle, linewidth=linewidth, color="#728fa5")
 plt.plot(X3r, Y3r, marker=marker, linestyle="None", color="black")
 plt.xlabel("E", fontsize=fontsize)     # C*1/(1+10**(pH-pKb))-KH*PC [g/L/d]
-plt.ylabel("F", fontsize=fontsize)     # qC [g/L/d]
+plt.ylabel("F", fontsize=fontsize)     # qC [mmol/L/d]
 plt.yticks(np.linspace(0, max(Y3r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X3r), max(X3r), numticks), fontsize=fontsize)
 
 plt.subplot(3,3,4)
 plt.plot(X4r, mdl4.intercept_ + mdl4.coef_*X4r, linestyle=linestyle, linewidth=linewidth, color="#728fa5")
 plt.plot(X4r,Y4r, marker=marker, linestyle="None", color="black")
-plt.xlabel("G", fontsize=fontsize)     # -----
-plt.ylabel("H", fontsize=fontsize)     # -----
+plt.xlabel("G", fontsize=fontsize)     # mu1*X1
+plt.ylabel("H", fontsize=fontsize)     # Dil*(S1_in - S1) + k_hyd*XT
 plt.yticks(np.linspace(0, max(Y4r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X4r), max(X4r), numticks), fontsize=fontsize)
 
 plt.subplot(3,3,5)
 plt.plot(X5r, mdl5.intercept_ + mdl5.coef_*X5r, linestyle=linestyle, linewidth=linewidth, color="#728fa5") 
 plt.plot(X5r,Y5r, marker=marker, linestyle="None", color="black")
-plt.xlabel("I", fontsize=fontsize)     # -----
-plt.ylabel("L", fontsize=fontsize)     # -----
+plt.xlabel("I", fontsize=fontsize)     # mu_2
+plt.ylabel("L", fontsize=fontsize)     # q_M/X_2
 plt.yticks(np.linspace(0, max(Y5r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X5r), max(X5r), numticks), fontsize=fontsize)
 
 plt.subplot(3,3,6)
 plt.plot(X61, mdl6.intercept_ + mdl6.coef_[0]*X61 +mdl6.coef_[1]*X62, linestyle=linestyle, linewidth=linewidth, color="#728fa5")
 plt.plot(X61, Y6r, marker=marker, linestyle="None", color="black")
-plt.ylabel("M", fontsize=fontsize)     # k6/k3*(D*(S2,in -S2))+ k6/k3*k2/k1*(D*(S1,in -S1)+K_hyd*XT
-plt.xlabel("N", fontsize=fontsize)     # D*(S2,in -S2)
+plt.ylabel("M", fontsize=fontsize)     # D*(S2,in -S2)
+plt.xlabel("N", fontsize=fontsize)     # qM
 plt.yticks(np.linspace(0, max(Y6r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X61), max(X61), numticks), fontsize=fontsize)
 
 plt.subplot(3,3,7)
 plt.plot(X62, mdl6.intercept_ + mdl6.coef_[0]*X61 +mdl6.coef_[1]*X62, linestyle=linestyle, linewidth=linewidth, color="#728fa5")
 plt.plot(X62, Y6r, marker=marker, linestyle="None", color="black")
-plt.xlabel("O", fontsize=fontsize)     # D*(S1,in -S1)+K_hyd*XT)
-plt.ylabel("P", fontsize=fontsize)     # -----
+plt.xlabel("O", fontsize=fontsize)     # D*(S1,in -S1)+K_hyd*XT
+plt.ylabel("P", fontsize=fontsize)     # qM
 plt.yticks(np.linspace(0, max(Y6r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X62), max(X62), numticks), fontsize=fontsize)
 
 plt.subplot(3,3,8)
 plt.plot(X71, mdl7.intercept_ + mdl7.coef_[0]*X71 + mdl7.coef_[1]*X72, linestyle=linestyle, linewidth=linewidth, color="#728fa5")
 plt.plot(X71,Y7r, marker=marker, linestyle="None", color="black")
-plt.ylabel("Q", fontsize=fontsize)     # k4/k1*(D*(S1,in -S1)+K_hyd*XT) + k5/k6*qM
-plt.xlabel("R", fontsize=fontsize)     # D*(S1,in -S1)+K_hyd*XT)
+plt.ylabel("R", fontsize=fontsize)     # k4/k1*(D*(S1,in -S1)+K_hyd*XT) + k5/k6*qM
+plt.xlabel("Q", fontsize=fontsize)     # qC - D*(Cin -C)
 plt.yticks(np.linspace(0, max(Y7r), numticks), fontsize=fontsize)
 plt.xticks(np.linspace(min(X71), max(X71), numticks), fontsize=fontsize)
 
