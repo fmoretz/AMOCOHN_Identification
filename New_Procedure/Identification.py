@@ -29,7 +29,7 @@ Dil     = 1/HRT
 
 S1_in = float(T2["S1in"])    # [gCOD/L]
 S2_in = float(T2["S2in"])    # [mmol/L]
-C_in  = float(T2["Cin"])    # [mmol/L]
+C_in  = float(T2["Cin"])     # [mmol/L]
 XT_in = float(T2["XTin"])    # [gCOD/L]
 
 # KINETICS
@@ -231,13 +231,13 @@ k5 = DD*k6
 
 k = [k1, k2, k3, k4, k5, k6, k_hyd]
 
-print(f'mu1,max: {mu1_max}; Ks1:  {KS1}; Cd1: {C_d[0]}; R2: {score1:.4f}, adj. R2: {R2_1:.4f}')
-print(f'mu2,max: {mu2_max}; Ks2:  {KS2}; KI2: {KI2}; Cd2: {C_d[1]}; R2: {score2:.4f}, adj. R2: {R2_2:.4f}')
-print(f'k1: {k1}, intercept: {int4}; R2: {score4:.4f}; adj. R2: {R2_4:.4f}')
-print(f'k2: {k2}, intercept: {int6}; R2: {score6:.4f}; adj. R2: {R2_6:.4f}')
-print(f'k3: {k3}, intercept: {int6}; R2: {score6:.4f}; adj. R2: {R2_6:.4f}')
-print(f'k4: {k4}, intercept: {int7}; R2: {score7:.4f}; adj. R2: {R2_7:.4f}')
-print(f'k5: {k5}, intercept: {int7}; R2: {score7:.4f}; adj. R2: {R2_7:.4f}')
-print(f'k6: {k6}, intercept: {int5}; R2: {score5:.4f}; adj. R2: {R2_5:.4f}')
-print(f'k_hyd: {k_hyd}, intercept: {int_hyd}; R2: {score_hyd:.4f}; adj. R2: {R2_hyd:.4f}')
-print(f'kLa: {kLa}, intercept: {int3}; R2: {score3:.4f}; adj. R2: {R2_3:.4f}')
+# print(f'mu1,max: {mu1_max}; Ks1:  {KS1}; Cd1: {C_d[0]}; R2: {score1:.4f}, adj. R2: {R2_1:.4f}')
+# print(f'mu2,max: {mu2_max}; Ks2:  {KS2}; KI2: {KI2}; Cd2: {C_d[1]}; R2: {score2:.4f}, adj. R2: {R2_2:.4f}')
+# print(f'k1: {k1}, intercept: {int4}; R2: {score4:.4f}; adj. R2: {R2_4:.4f}')
+# print(f'k2: {k2}, intercept: {int6}; R2: {score6:.4f}; adj. R2: {R2_6:.4f}')
+# print(f'k3: {k3}, intercept: {int6}; R2: {score6:.4f}; adj. R2: {R2_6:.4f}')
+# print(f'k4: {k4}, intercept: {int7}; R2: {score7:.4f}; adj. R2: {R2_7:.4f}')
+# print(f'k5: {k5}, intercept: {int7}; R2: {score7:.4f}; adj. R2: {R2_7:.4f}')
+# print(f'k6: {k6}, intercept: {int5}; R2: {score5:.4f}; adj. R2: {R2_5:.4f}')
+# print(f'k_hyd: {k_hyd}, intercept: {int_hyd}; R2: {score_hyd:.4f}; adj. R2: {R2_hyd:.4f}')
+# print(f'kLa: {kLa}, intercept: {int3}; R2: {score3:.4f}; adj. R2: {R2_3:.4f}')
