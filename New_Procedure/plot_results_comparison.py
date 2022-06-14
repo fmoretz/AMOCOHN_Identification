@@ -12,14 +12,14 @@ xaxisticks = np.linspace(0, tspan[-1], 9)
 legendloc ='upper right'
 legendfontsize = 6.6
 
-plt.figure(1)
+fig1 = plt.figure(1)
 plt.subplots_adjust(
     left   = 0.1,
     bottom = 0.1,
     right  = 0.9,
     top    = 0.9,
     wspace = 0.3,
-    hspace = 0.5
+    hspace = 0.3
     )
 
 plt.tight_layout()
@@ -70,9 +70,9 @@ plt.xticks(ticks=np.linspace(0,tspan[-1],5))
 plt.grid(alpha=gridalpha, color=gridcolor, linestyle=gridstyle)
 plt.legend(loc=legendloc, frameon=False, fontsize='small')
 
-plt.savefig("results_flows.png", format="png", dpi=1200)
+# plt.savefig("results_flows.png", format="png", dpi=1200)
 
-plt.figure(2)
+fig2 = plt.figure(2)
 
 plt.subplot(5,2,1)
 plt.plot(tspan, S1_or, color=linecolor, linestyle = 'dashed', label="AM2HN")
@@ -172,6 +172,11 @@ plt.xlabel('Time [d]')
 plt.xlim(0,tspan[-1])
 plt.grid(color=gridcolor, alpha=gridalpha, linestyle=gridstyle)
 plt.legend(loc=legendloc, frameon=False, fontsize= legendfontsize)
+
+fig2.align_ylabels()
+
+
+#plt.savefig("results_SSratios.png", format="png", dpi=1200)
 
 plt.figure(3)
 plt.subplot(2,2,1)
