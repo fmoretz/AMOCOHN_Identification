@@ -10,6 +10,9 @@ solver/utility/LinearEquations
 ~$plot.xlsx
 ~$plot
 
+res_reg_fig
+DS2_RES/subplot.plt
+
 # temp
 .tempRunnerFile.py
 tempCodeRunnerFile.py
@@ -193,3 +196,14 @@ Blog
 About
 Loading complete
 data/KI_Sensitivity.xlsx
+New_Procedure/DS2_RES/subplot.plt
+New_Procedure/plot_linearregression.py
+New_Procedure/subplot_linearregression.py
+New_Procedure/DS2_RES/reg_res.eps
+New_Procedure/DS2_RES/reg_res.plt
+.gitignore
+New_Procedure/DS2_RES/dataset_2.dat
+New_Procedure/plot_linearregression.py
+.gitignore
+New_Procedure/DS1_RES
+New_Procedure/DS2_RES

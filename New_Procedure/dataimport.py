@@ -1,8 +1,8 @@
 import pandas as pd
 from pathlib import Path
 
-print('Choose a datasets: \n 1 -> AMOCO_HN \n 2 -> provaADM1')
-name_index = input("->")
+print('Choose a datasets: \n 1) AMOCO_HN \n 2) provaADM1')
+name_index = input("--> ")
 datasets = ["amoco_HN","provaADM1"]
 simname  = datasets[int(name_index) -1]
 print("Data are from:",simname)

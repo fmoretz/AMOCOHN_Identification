@@ -35,7 +35,6 @@ XT_in = float(T2["XTin"])    # [gCOD/L]
 # KINETICS
 
 # Acetogens
-
 Yr1 = np.array(S1)
 
 X11 = np.array(Dil*S1).reshape((-1,1))
@@ -62,10 +61,24 @@ R2_1 = f_adjustedR2(Yr1,Xr1,score1)
 KS1 = a                                 # [g/L] - Half saturation constant
 C_d[0]  = c/(KS1 + c)                   # [-]   - Proportionality Decay
 mu1_max = KS1*alfa/(1-C_d[0])/b         # [1/d] - Max biomass growth rate
+xmodel_S1 = mdl1.intercept_ + mdl1.coef_[0]*X11 + mdl1.coef_[1]*X12
 
+with open("New_Procedure/DS2_RES/kinetics_S1_1.txt", "w") as f:
+    # write headers
+    f.write('D*S_1' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, Xr1.shape[0]):
+        f.write(str(Xr1[i,0]) + "\t" + str(Yr1[i]) + "\t" + str(xmodel_S1[i][0]) + '\n')
+
+with open("New_Procedure/DS2_RES/kinetics_S1_2.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, Xr1.shape[0]):
+        f.write(str(Xr1[i,1]) + "\t" + str(Yr1[i]) + "\t" + str(xmodel_S1[i][0]) + '\n')
+        
 
 # Methanogens
-
 Xr2 = (Dil, S2)
 Yr2 = S2
 
@@ -95,8 +108,16 @@ Ks     = (KS1, KS2)                         # [g/L]    - Half saturation constan
 KI2    = np.abs(KI2)                        # [mmol/L] - Inhibition constant for S2
 kd     = np.multiply(C_d,mu_max)
 
-# HYDROLYSIS
+xmodel_S2 = func2(Xr2,beta2[0],beta2[1],beta2[2],beta2[3])
 
+# with open("New_Procedure/DS2_RES/kinetics_S2.txt", "w") as f:
+#     # write headers
+#     f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+#     # write the output to a file
+#     for i in range(0, Xr1.shape[0]):
+#         f.write(str(Xr2[i,0]) + "\t" + str(Yr2[i]) + "\t" + str(xmodel_S2[i][0]) + '\n')
+
+# HYDROLYSIS
 X_hydr = XT
 Y_hydr = Dil*(XT_in-XT)
 mdl_hydr1= LinearRegression(fit_intercept=True, positive=True).fit(np.array(X_hydr).reshape(-1,1), np.array(Y_hydr))
@@ -115,8 +136,16 @@ int_hyd = mdl_hyd.intercept_
 k_hyd   = mdl_hyd.coef_
 R2_hyd =f_adjustedR2(Y_hydr,X_hydr,score_hyd)
 
-# L/G TRANSFER
+xmodel_hydr = mdl_hyd.intercept_ + mdl_hyd.coef_*X_hydr
 
+with open("New_Procedure/DS2_RES/kinetics_hyd.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X_hydr)):
+        f.write(str(X_hydr[i]) + "\t" + str(Y_hydr[i]) + "\t" + str(xmodel_hydr[i]) + '\n')
+
+# L/G TRANSFER
 pKb = -np.log10(Kb)
 fun = 1/(1+10**(pH-pKb))
 X3r = C*fun - KH*P_C
@@ -137,8 +166,16 @@ int3 = mdl3.intercept_
 kLa = mdl3.coef_
 R2_3 = f_adjustedR2(Y3r,X3r,score3)
 
-# YIELD COEFFICIENTS: [CODdeg, VFAprof, VFAcons, CO2prod(1), CO2prod(2), CH4prod, hydrolysis]
+xmodel_3 = mdl3.intercept_ + mdl3.coef_*X3r
 
+with open("New_Procedure/DS2_RES/kinetics_kLa.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X3r)):
+        f.write(str(X3r[i]) + "\t" + str(Y3r[i]) + "\t" + str(xmodel_3[i]) + '\n')
+
+# YIELD COEFFICIENTS: [CODdeg, VFAprof, VFAcons, CO2prod(1), CO2prod(2), CH4prod, hydrolysis]
 mu_1 = alfa*Dil + C_d[0]*mu1_max
 mu_2 = alfa*Dil + C_d[1]*mu2_max
 
@@ -160,6 +197,14 @@ k1 = mdl4.coef_
 
 R2_4 = f_adjustedR2(Y4r,X4r,score4)
 
+xmodel_4 = mdl4.intercept_ + mdl4.coef_*X4r
+
+with open("New_Procedure/DS2_RES/kinetics_k1.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X4r)):
+        f.write(str(X4r[i]) + "\t" + str(Y4r[i]) + "\t" + str(xmodel_4[i]) + '\n')
 
 X5r = mu_2
 Y5r = q_M/X_2
@@ -177,6 +222,15 @@ int5 = mdl5.intercept_
 k6 = mdl52.coef_
 
 R2_5 = f_adjustedR2(Y5r,X5r,score5)
+
+xmodel_5 = mdl5.intercept_ + mdl5.coef_*X5r
+
+with open("New_Procedure/DS2_RES/kinetics_k6.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X5r)):
+        f.write(str(X5r[i]) + "\t" + str(Y5r[i]) + "\t" + str(xmodel_5[i]) + '\n')
 
 X61 = np.array(Dil*(S2_in-S2)).reshape((-1,1))
 X62 = np.array(Dil*(S1_in-S1) + k_hyd*XT).reshape((-1,1))
@@ -196,10 +250,26 @@ else:
     score6 = score62
 
 int6 = mdl6.intercept_
-AA = mdl6.coef_[0]
-BB = mdl6.coef_[1]/AA
+AA = mdl6.coef_[0]    # k6/k3
+BB = mdl6.coef_[1]/AA # k2/k1
 
 R2_6 = f_adjustedR2(Y6r,X6r,score6)
+
+xmodel_6 = mdl6.intercept_ + mdl6.coef_[0]*X61 +mdl6.coef_[1]*X62
+
+with open("New_Procedure/DS2_RES/kinetics_k6k3_k2k1_1.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X6r)):
+        f.write(str(X6r[i][0]) + "\t" + str(Y6r[i]) + "\t" + str(xmodel_6[i][0]) + '\n')
+        
+with open("New_Procedure/DS2_RES/kinetics_k6k3_k2k1_2.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X6r)):
+        f.write(str(X6r[i][1]) + "\t" + str(Y6r[i]) + "\t" + str(xmodel_6[i][0]) + '\n')
 
 X71 = np.array(Dil*(S1_in-S1) + k_hyd*XT).reshape((-1,1))
 X72 = np.array(q_M).reshape((-1,1))
@@ -221,13 +291,29 @@ int7 = mdl7.intercept_
 
 R2_7 = f_adjustedR2(Y7r,X7r,score7)
 
-CC = mdl71.coef_[0]
-DD = mdl71.coef_[1]
+CC = mdl71.coef_[0] # k4/k1
+DD = mdl71.coef_[1] # k5/k6
 
 k2 = BB*k1
 k3 = k6/AA
 k4 = CC*k1
 k5 = DD*k6
+
+xmodel_7 = mdl7.intercept_ + mdl7.coef_[0]*X71 + mdl7.coef_[1]*X72
+
+with open("New_Procedure/DS2_RES/kinetics_k4k1_k5k6_1.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X7r)):
+        f.write(str(X7r[i][0]) + "\t" + str(Y7r[i]) + "\t" + str(xmodel_7[i][0]) + '\n')
+        
+with open("New_Procedure/DS2_RES/kinetics_k4k1_k5k6_2.txt", "w") as f:
+    # write headers
+    f.write('X' + '\t' + 'Yexp' + '\t' + 'Ymodel' + '\n')
+    # write the output to a file
+    for i in range(0, len(X7r)):
+        f.write(str(X7r[i][1]) + "\t" + str(Y7r[i]) + "\t" + str(xmodel_7[i][0]) + '\n')
 
 k = [k1, k2, k3, k4, k5, k6, k_hyd]
 
